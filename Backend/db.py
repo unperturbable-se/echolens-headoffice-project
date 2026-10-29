@@ -19,7 +19,7 @@ def connect() -> psycopg.Connection:
         dbname=os.environ["db_name"],
         user=os.environ["db_user"],
         password=os.environ["db_password"],
-        sslmode="require",
+        sslmode=os.getenv("DB_SSLMODE", "require"),
         row_factory=dict_row,
     )
 
