@@ -8,28 +8,28 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # ~350 MB compressed — smallest Supabase-compatible tag
+        image: supabase/postgres:17.11.0.002
         env:
-          POSTGRES_USER: appuser
           POSTGRES_PASSWORD: apppassword
           POSTGRES_DB: appdb
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U appuser -d appdb"
+          --health-cmd "pg_isready -U postgres -d appdb"
           --health-interval 5s
           --health-retries 10
 
     env:
       PGHOST: localhost
       PGPORT: 5432
-      PGUSER: appuser
+      PGUSER: postgres
       PGPASSWORD: apppassword
       PGDATABASE: appdb
 
       db_host: localhost
       db_port: 5432
       db_name: appdb
-      db_user: appuser
+      db_user: postgres
       db_password: apppassword
 
     steps:
