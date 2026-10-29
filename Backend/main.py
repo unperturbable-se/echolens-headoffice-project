@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from logic_handling import *
 
 app = FastAPI(
     title="ShipLens Platform API",
