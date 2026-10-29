@@ -28,7 +28,7 @@ jobs:
 
       - name: Run SQL files
         run: |
-          for f in schema seed api; do
+          for f in seed api seed ; do
             psql -v ON_ERROR_STOP=1 -h localhost -U appuser -d appdb -f Database/$f.sql
           done
 
