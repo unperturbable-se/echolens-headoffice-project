@@ -2,15 +2,9 @@ name: Python CI Pipeline
 
 on:
   push:
-<<<<<<< HEAD
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
-=======
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
->>>>>>> 4c0ae630bf00d6f368e8d0f6d3ccd831de41bdc9
 
 jobs:
   quality-and-test:
@@ -25,10 +19,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-<<<<<<< HEAD
-=======
-      # Note: Python setup needs to happen globally, so we explicitly clear the working directory for this step
->>>>>>> 4c0ae630bf00d6f368e8d0f6d3ccd831de41bdc9
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -37,11 +27,7 @@ jobs:
           run:
             working-directory: . 
 
-<<<<<<< HEAD
     
-=======
-      # Back inside your subfolder, install tools and run them
->>>>>>> 4c0ae630bf00d6f368e8d0f6d3ccd831de41bdc9
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
