@@ -117,7 +117,7 @@ def require_actor(authorization: Optional[str] = Header(None, alias="Authorizati
     token = _extract_bearer(authorization)
     token_hash = hash_token(token)
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             row = db.validate_session(conn, token_hash)
     except psycopg.Error:
         raise HTTPException(status_code=500, detail="session lookup failed")
@@ -260,7 +260,7 @@ def login(body: LoginIn, request: Request) -> dict:
     ip = _client_ip(request)
     ua = (request.headers.get("user-agent") or "")[:500]
 
-    with db.connection() as conn:
+    with db.connect() as conn:
         row = db.get_login(conn, body.email)
         if row is None or not verify_password(body.password, row["password_hash"]):
             # Same error for both cases to avoid user enumeration.
@@ -289,7 +289,7 @@ def login(body: LoginIn, request: Request) -> dict:
 def logout(authorization: Optional[str]) -> dict:
     token = _extract_bearer(authorization)
     token_hash = hash_token(token)
-    with db.connection() as conn:
+    with db.connect() as conn:
         db.delete_session(conn, token_hash)
     return {"status": "success"}
 
@@ -300,7 +300,7 @@ def logout(authorization: Optional[str]) -> dict:
 
 def check_db() -> str:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT 1")
         return "connected"
@@ -314,7 +314,7 @@ def check_db() -> str:
 
 def create_branch(actor: UUID, body: CreateBranchIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             branch_id = db.create_branch(
                 conn, actor,
                 body.code, body.name_en, body.name_ur, body.city,
@@ -327,7 +327,7 @@ def create_branch(actor: UUID, body: CreateBranchIn) -> dict:
 
 def list_branches(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_branches(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -340,7 +340,7 @@ def list_branches(actor: UUID) -> dict:
 
 def create_user(actor: UUID, body: CreateUserIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             user_id = db.create_user(
                 conn, actor, body.branch_id,
                 body.name, body.email, body.password_hash, body.role,
@@ -352,7 +352,7 @@ def create_user(actor: UUID, body: CreateUserIn) -> dict:
 
 def set_user_active(actor: UUID, body: SetUserActiveIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.set_user_active(conn, actor, body.user_id, body.is_active)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -361,7 +361,7 @@ def set_user_active(actor: UUID, body: SetUserActiveIn) -> dict:
 
 def list_users(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_users(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -374,7 +374,7 @@ def list_users(actor: UUID) -> dict:
 
 def submit_collection(actor: UUID, body: SubmitCollectionIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             cid = db.submit_collection(
                 conn, actor,
                 body.title_en, body.title_ur, body.amount, body.collection_date,
@@ -386,7 +386,7 @@ def submit_collection(actor: UUID, body: SubmitCollectionIn) -> dict:
 
 def review_collection(actor: UUID, body: ReviewCollectionIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.review_collection(
                 conn, actor, body.collection_id, body.approve, body.notes,
             )
@@ -397,7 +397,7 @@ def review_collection(actor: UUID, body: ReviewCollectionIn) -> dict:
 
 def list_collections(actor: UUID, body: ListCollectionsIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_collections(conn, actor, body.status)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -410,7 +410,7 @@ def list_collections(actor: UUID, body: ListCollectionsIn) -> dict:
 
 def submit_weekly_report(actor: UUID, body: SubmitWeeklyReportIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rid = db.submit_weekly_report(
                 conn, actor,
                 body.week_start, body.week_end,
@@ -424,7 +424,7 @@ def submit_weekly_report(actor: UUID, body: SubmitWeeklyReportIn) -> dict:
 
 def list_weekly_reports(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_weekly_reports(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -437,7 +437,7 @@ def list_weekly_reports(actor: UUID) -> dict:
 
 def add_member(actor: UUID, body: AddMemberIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             mid = db.add_member(
                 conn, actor, body.branch_id,
                 body.name_en, body.name_ur, body.cnic, body.phone,
@@ -449,7 +449,7 @@ def add_member(actor: UUID, body: AddMemberIn) -> dict:
 
 def set_member_active(actor: UUID, body: SetMemberActiveIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.set_member_active(conn, actor, body.member_id, body.is_active)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -458,7 +458,7 @@ def set_member_active(actor: UUID, body: SetMemberActiveIn) -> dict:
 
 def list_members(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_members(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -471,7 +471,7 @@ def list_members(actor: UUID) -> dict:
 
 def save_notice(actor: UUID, body: SaveNoticeIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             nid = db.save_notice(
                 conn, actor, body.notice_id,
                 body.title_en, body.title_ur,
@@ -484,7 +484,7 @@ def save_notice(actor: UUID, body: SaveNoticeIn) -> dict:
 
 def list_notices(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_notices(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -493,7 +493,7 @@ def list_notices(actor: UUID) -> dict:
 
 def list_published_notices() -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_published_notices(conn)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -506,7 +506,7 @@ def list_published_notices() -> dict:
 
 def submit_inquiry(body: SubmitInquiryIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.submit_inquiry(conn, body.name, body.email, body.subject, body.message)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -515,7 +515,7 @@ def submit_inquiry(body: SubmitInquiryIn) -> dict:
 
 def resolve_inquiry(actor: UUID, body: ResolveInquiryIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.resolve_inquiry(conn, actor, body.inquiry_id)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -524,7 +524,7 @@ def resolve_inquiry(actor: UUID, body: ResolveInquiryIn) -> dict:
 
 def list_inquiries(actor: UUID) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_inquiries(conn, actor)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -537,7 +537,7 @@ def list_inquiries(actor: UUID) -> dict:
 
 def list_audit_logs(actor: UUID, body: ListAuditLogsIn) -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             rows = db.list_audit_logs(conn, actor, body.limit)
     except psycopg.Error as e:
         raise _map_db_error(e)
@@ -550,7 +550,7 @@ def list_audit_logs(actor: UUID, body: ListAuditLogsIn) -> dict:
 
 def purge_expired_sessions() -> dict:
     try:
-        with db.connection() as conn:
+        with db.connect() as conn:
             db.purge_expired_sessions(conn)
     except psycopg.Error as e:
         raise _map_db_error(e)
