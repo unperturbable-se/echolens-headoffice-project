@@ -15,21 +15,31 @@ jobs:
           POSTGRES_DB: appdb
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U appuser"
+          --health-cmd "pg_isready -U appuser -d appdb"
           --health-interval 5s
           --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://appuser:apppassword@localhost:5432/appdb
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: appuser
       PGPASSWORD: apppassword
+      PGDATABASE: appdb
+
+      db_host: localhost
+      db_port: 5432
+      db_name: appdb
+      db_user: appuser
+      db_password: apppassword
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run SQL files
+      - name: Run SQL files (schema → seed → api)
         run: |
-          for f in seed api seed ; do
-            psql -v ON_ERROR_STOP=1 -h localhost -U appuser -d appdb -f Database/$f.sql
+          for f in schema seed api; do
+            echo "==> Database/$f.sql"
+            psql -v ON_ERROR_STOP=1 -f Database/$f.sql
           done
 
       - name: Build image
@@ -38,7 +48,11 @@ jobs:
       - name: Run container
         run: |
           docker run -d --name backend --network host \
-            -e DATABASE_URL \
+            -e db_host \
+            -e db_port \
+            -e db_name \
+            -e db_user \
+            -e db_password \
             -e PORT=8000 \
             backend:test
 
