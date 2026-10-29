@@ -45,7 +45,7 @@ jobs:
           done
 
       - name: Build image
-        run: docker build -t backend:test backend
+        run: docker build -t backend:test Backend
 
       - name: Run container
         run: |
