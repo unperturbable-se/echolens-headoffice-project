@@ -1,0 +1,52 @@
+name: Backend CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: appuser
+          POSTGRES_PASSWORD: apppassword
+          POSTGRES_DB: appdb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U appuser"
+          --health-interval 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://appuser:apppassword@localhost:5432/appdb
+      PGPASSWORD: apppassword
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run SQL files
+        run: |
+          for f in schema seed api; do
+            psql -v ON_ERROR_STOP=1 -h localhost -U appuser -d appdb -f Database/$f.sql
+          done
+
+      - name: Build image
+        run: docker build -t backend:test -f backend/Dockerfile backend
+
+      - name: Run container
+        run: |
+          docker run -d --name backend --network host \
+            -e DATABASE_URL \
+            -e PORT=8000 \
+            backend:test
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 30); do
+            body=$(curl -sf http://localhost:8000/health) && break
+            sleep 2
+          done
+          docker logs backend
+          test "$body" = '{"status":"healthy","database":"connected"}'
