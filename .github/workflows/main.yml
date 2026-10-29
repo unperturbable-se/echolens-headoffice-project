@@ -8,7 +8,6 @@ jobs:
 
     services:
       postgres:
-        # ~350 MB compressed — smallest Supabase-compatible tag
         image: supabase/postgres:17.11.0.002
         env:
           POSTGRES_PASSWORD: apppassword
@@ -34,6 +33,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Grant public schema privileges
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          GRANT USAGE, CREATE ON SCHEMA public TO postgres;
+          SQL
 
       - name: Run SQL files (schema → seed → api)
         run: |
