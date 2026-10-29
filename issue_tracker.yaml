@@ -1,0 +1,379 @@
+# SECURITY_AUDIT.yaml
+# Track with: yq '.' SECURITY_AUDIT.yaml
+# Update:      yq -i '.categories.schema.p0[0].done = true' SECURITY_AUDIT.yaml
+
+audit:
+  repo: collections-api
+  date: "2026-10-29"
+  status: NOT_READY_FOR_PRODUCTION
+  legend:
+    done: [false, true, "in_progress", "dropped"]
+  priorities:
+    P0: blocker
+    P1: production_gap
+    P2: hardening
+
+categories:
+
+  schema:
+    p0:
+      - id: SCHEMA-001
+        task: "api.create_session - change p_hash CHAR -> p_hash TEXT"
+        done: false
+      - id: SCHEMA-002
+        task: "api.validate_session - change p_hash CHAR -> p_hash TEXT"
+        done: false
+      - id: SCHEMA-003
+        task: "api.delete_session - change p_hash CHAR -> p_hash TEXT"
+        done: false
+      - id: SCHEMA-004
+        task: "verify public.user_sessions.token_hash is TEXT (not CHAR(1))"
+        done: false
+      - id: SCHEMA-005
+        task: "GRANT EXECUTE ON FUNCTION private.purge_expired_sessions() TO app_backend"
+        note: "or wrap in new api.purge_expired_sessions()"
+        done: false
+      - id: SCHEMA-006
+        task: "ALTER DEFAULT PRIVILEGES for api and private schemas"
+        sql: |
+          ALTER DEFAULT PRIVILEGES IN SCHEMA api, private
+              REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA api
+              GRANT EXECUTE ON FUNCTIONS TO app_backend;
+        done: false
+
+    p1:
+      - id: SCHEMA-007
+        task: "UNIQUE INDEX ON user_sessions(token_hash)"
+        done: false
+      - id: SCHEMA-008
+        task: "INDEX ON user_sessions(expires_at)"
+        done: false
+      - id: SCHEMA-009
+        task: "INDEX ON user_sessions(user_id)"
+        done: false
+      - id: SCHEMA-010
+        task: "INDEX ON users(email)"
+        done: false
+      - id: SCHEMA-011
+        task: "INDEX ON audit_logs(created_at DESC)"
+        done: false
+      - id: SCHEMA-012
+        task: "INDEX ON collection_records(branch_id, status, created_at DESC)"
+        done: false
+      - id: SCHEMA-013
+        task: "api.submit_collection - reject when u.branch_id IS NULL"
+        done: false
+      - id: SCHEMA-014
+        task: "api.set_user_active - reject p_id = p_actor (self-lockout)"
+        done: false
+      - id: SCHEMA-015
+        task: "api.set_user_active - reject deactivating last active SUPER_ADMIN"
+        done: false
+      - id: SCHEMA-016
+        task: "api.review_collection - reject submitted_by = p_actor (self-approval)"
+        done: false
+      - id: SCHEMA-017
+        task: "api.create_session - prune user's expired sessions before insert"
+        done: false
+      - id: SCHEMA-018
+        task: "add last_used_at column + idle-expiry to purge_expired_sessions"
+        done: false
+      - id: SCHEMA-019
+        task: "get_login return password_hash VARCHAR -> TEXT; verify users.password_hash is TEXT"
+        done: false
+      - id: SCHEMA-020
+        task: "add CHECK (amount > 0) on collection_records"
+        done: false
+      - id: SCHEMA-021
+        task: "verify FK cascade on user_sessions, collection_records, audit_logs"
+        done: false
+
+    p2:
+      - id: SCHEMA-022
+        task: "add last_password_change column on users"
+        done: false
+      - id: SCHEMA-023
+        task: "add must_change_password column on users"
+        done: false
+      - id: SCHEMA-024
+        task: "add pepper_version column on users (for future rehash-on-login)"
+        done: false
+      - id: SCHEMA-025
+        task: "document published_at retention semantics in save_notice"
+        done: false
+      - id: SCHEMA-026
+        task: "plan audit_logs retention / partitioning"
+        done: false
+      - id: SCHEMA-027
+        task: "add schema comment warning on get_login about password_hash in logs"
+        done: false
+
+  db:
+    p1:
+      - id: DB-001
+        task: "change %s::char casts -> %s::text (after SQL fix)"
+        done: false
+      - id: DB-002
+        task: "make sslmode and sslrootcert configurable from env"
+        done: false
+      - id: DB-003
+        task: "add statement_timeout per connection (5s default)"
+        done: false
+      - id: DB-004
+        task: "add connect_timeout in DSN (5s)"
+        done: false
+      - id: DB-005
+        task: "add psycopg_pool.ConnectionPool (min=2, max=20)"
+        done: false
+      - id: DB-006
+        task: "add retry logic for read-only calls (validate_session, list_*)"
+        done: false
+      - id: DB-007
+        task: "structured logging around each DB call (fn, actor, duration_ms)"
+        note: "never log email, message, password*, token*"
+        done: false
+      - id: DB-008
+        task: "add full type hints to every db.* function"
+        done: false
+      - id: DB-009
+        task: "use AS id / AS data aliases consistently in every call"
+        done: false
+
+  api:
+    p0:
+      - id: API-001
+        task: "change CreateUserIn.password_hash:str -> password:str, hash server-side"
+        reason: "caller-controlled hash enables backdoor / lockout / no policy"
+        done: false
+      - id: API-002
+        task: "add password_pepper to env (api.py fails at import without it)"
+        done: false
+      - id: API-003
+        task: "add cors_origins to env"
+        done: false
+      - id: API-004
+        task: "change db_sslmode from hardcoded require to verify-full"
+        done: false
+      - id: API-005
+        task: "add db_sslrootcert (CA cert path) to env"
+        done: false
+      - id: API-006
+        task: "confirm scrypt hash_password / verify_password is in place"
+        done: false
+
+    p1:
+      - id: API-007
+        task: "dummy-hash burn on missing user in login (close timing side-channel)"
+        done: false
+      - id: API-008
+        task: "raise scrypt N to 2**17 (OWASP 2023) - verify worker memory"
+        done: false
+      - id: API-009
+        task: "add pepper versioning (scrypt$v1$...) so peppers can rotate"
+        done: false
+      - id: API-010
+        task: "_client_ip - only trust X-Forwarded-For when peer in trusted_proxies"
+        done: false
+      - id: API-011
+        task: "_map_db_error - inspect exc.sqlstate == P0001 + exc.diag.message_primary"
+        done: false
+      - id: API-012
+        task: "unknown DB errors -> 500 generic body (not 400); log full exception"
+        done: false
+      - id: API-013
+        task: "add slowapi rate limiting on /auth/login and /inquiries"
+        done: false
+      - id: API-014
+        task: "make logout idempotent (return 200 on missing session)"
+        done: false
+      - id: API-015
+        task: "add EmailStr on LoginIn, CreateUserIn, SubmitInquiryIn"
+        done: false
+      - id: API-016
+        task: "add password strength validation (zxcvbn or pwned-passwords offline)"
+        done: false
+      - id: API-017
+        task: "add must_change_password flow for admin-created users"
+        done: false
+      - id: API-018
+        task: "reuse one per-request connection for require_actor + handler"
+        done: false
+      - id: API-019
+        task: "validate week_start <= week_end and new_registrations <= total_active"
+        done: false
+      - id: API-020
+        task: 'ListCollectionsIn.status -> Literal["PENDING","APPROVED","REJECTED"]'
+        done: false
+      - id: API-021
+        task: "add offset/cursor to ListAuditLogsIn"
+        done: false
+      - id: API-022
+        task: "remove __import__(os) hack - just import os"
+        done: false
+      - id: API-023
+        task: "add HTTPBearer security scheme for Swagger UI"
+        done: false
+
+  routing:
+    p1:
+      - id: ROUTE-001
+        task: "change /notices/published from POST -> GET"
+        done: false
+      - id: ROUTE-002
+        task: "split /health into /health/live (no DB) and /health/ready (DB)"
+        done: false
+      - id: ROUTE-003
+        task: "/health/ready returns 503 when DB disconnected"
+        done: false
+      - id: ROUTE-004
+        task: "cache /health/ready result for ~5s (k8s probes every 5-10s)"
+        done: false
+      - id: ROUTE-005
+        task: "add pagination to list_branches, list_users, list_members, list_notices, list_inquiries"
+        done: false
+      - id: ROUTE-006
+        task: "/maintenance/purge-sessions - require maintenance_token + rate limit"
+        done: false
+      - id: ROUTE-007
+        task: "validate CORS config at startup (allow_credentials + '*' = invalid)"
+        done: false
+      - id: ROUTE-008
+        task: "document DELETE semantics (soft-delete via set_active(false))"
+        done: false
+      - id: ROUTE-009
+        task: "add GET /{id} for branches, users, notices, collections"
+        done: false
+      - id: ROUTE-010
+        task: "add /v1 prefix (or accept later breaking change)"
+        done: false
+      - id: ROUTE-011
+        task: "add request body size limit (reverse-proxy client_max_body_size)"
+        done: false
+      - id: ROUTE-012
+        task: "logout route - use authorization:str = Header(...) for FastAPI error"
+        done: false
+
+  env:
+    p0:
+      - {id: ENV-001, var: password_pepper,          note: "64-char random (secrets manager in prod)", done: false}
+      - {id: ENV-002, var: password_pepper_version,  note: "e.g. v1",                                  done: false}
+      - {id: ENV-003, var: cors_origins,             note: "comma-separated origins",                 done: false}
+      - {id: ENV-004, var: db_sslmode,               note: "verify-full",                             done: false}
+      - {id: ENV-005, var: db_sslrootcert,           note: "path to CA cert",                         done: false}
+      - {id: ENV-006, var: app_env,                  note: "prod",                                    done: false}
+
+    p1:
+      - {id: ENV-007,  var: session_ttl_hours,             default: 8,      done: false}
+      - {id: ENV-008,  var: app_host,                      default: "0.0.0.0", done: false}
+      - {id: ENV-009,  var: app_port,                      default: 8000,   done: false}
+      - {id: ENV-010,  var: app_workers,                   default: 4,      done: false}
+      - {id: ENV-011,  var: app_root_path,                 default: "",     done: false}
+      - {id: ENV-012,  var: app_debug,                     default: false,  done: false}
+      - {id: ENV-013,  var: log_level,                     default: info,   done: false}
+      - {id: ENV-014,  var: log_format,                    default: json,   done: false}
+      - {id: ENV-015,  var: trusted_proxies,               note: "CIDR list", done: false}
+      - {id: ENV-016,  var: db_statement_timeout_ms,       default: 5000,   done: false}
+      - {id: ENV-017,  var: db_connect_timeout_s,          default: 5,      done: false}
+      - {id: ENV-018,  var: db_pool_min,                   default: 2,      done: false}
+      - {id: ENV-019,  var: db_pool_max,                   default: 20,     done: false}
+      - {id: ENV-020,  var: rate_limit_login_per_minute,   default: 10,     done: false}
+      - {id: ENV-021,  var: rate_limit_inquiry_per_minute, default: 5,      done: false}
+      - {id: ENV-022,  var: maintenance_token,             note: "32-char random", done: false}
+
+  code:
+    p2:
+      - id: CODE-001
+        task: "add X-Request-Id middleware (correlation ID in every log line)"
+        done: false
+      - id: CODE-002
+        task: "structured JSON logging (structlog or python-json-logger)"
+        done: false
+      - id: CODE-003
+        task: "add /metrics endpoint (Prometheus)"
+        done: false
+      - id: CODE-004
+        task: "OpenTelemetry tracing"
+        done: false
+      - id: CODE-005
+        task: "log db.health_check_failed exception detail"
+        done: false
+      - id: CODE-006
+        task: "set log_statement = 'mod' in PostgreSQL (avoid password hash in logs)"
+        done: false
+
+  infrastructure:
+    p2:
+      - id: INFRA-001
+        task: "TLS termination (nginx / Caddy / Cloudflare / uvicorn --ssl-*)"
+        done: false
+      - id: INFRA-002
+        task: "secrets manager for password_pepper, db_password"
+        done: false
+      - id: INFRA-003
+        task: "DB migration tool (Alembic / sqitch / numbered .sql runner)"
+        done: false
+      - id: INFRA-004
+        task: "log aggregation (CloudWatch / Loki / Datadog)"
+        done: false
+      - id: INFRA-005
+        task: "test DB backup restore (not just 'have backups')"
+        done: false
+      - id: INFRA-006
+        task: "WAF/CDN in front of /inquiries and /notices/published"
+        done: false
+      - id: INFRA-007
+        task: "rotation plan for db_password and password_pepper"
+        done: false
+
+fix_order:
+  - step: 1
+    task: "fix p_hash CHAR bug in SQL (create/validate/delete session)"
+    done: false
+  - step: 2
+    task: "verify user_sessions.token_hash column type"
+    done: false
+  - step: 3
+    task: "change CreateUserIn.password_hash -> password, hash server-side"
+    done: false
+  - step: 4
+    task: "add password_pepper, cors_origins, db_sslmode, db_sslrootcert to env"
+    done: false
+  - step: 5
+    task: "grant private.purge_expired_sessions to app_backend"
+    done: false
+  - step: 6
+    task: "add ALTER DEFAULT PRIVILEGES"
+    done: false
+  - step: 7
+    task: "add indexes"
+    done: false
+  - step: 8
+    task: "add connection pooling + statement/connect timeouts"
+    done: false
+  - step: 9
+    task: "add rate limiting"
+    done: false
+  - step: 10
+    task: "split /health into liveness/readiness"
+    done: false
+  - step: 11
+    task: "add pagination to list endpoints"
+    done: false
+  - step: 12
+    task: "add structured logging + request IDs"
+    done: false
+  - step: 13
+    task: "fix timing side-channel + raise scrypt N + pepper versioning"
+    done: false
+  - step: 14
+    task: "everything else"
+    done: false
+  - step: 15
+    task: "TLS termination, WAF, secrets manager, migrations, backups"
+    done: false
+
+changelog:
+  - date: "2026-10-29"
+    change: "initial audit"
+    author: ""
