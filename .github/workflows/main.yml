@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: supabase/postgres:17.11.0.002
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: apppassword
           POSTGRES_DB: appdb
@@ -16,6 +16,7 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U postgres -d appdb"
           --health-interval 5s
+          --health-timeout 5s
           --health-retries 10
 
     env:
@@ -24,46 +25,37 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: apppassword
       PGDATABASE: appdb
-
       db_host: localhost
       db_port: 5432
       db_name: appdb
       db_user: postgres
       db_password: apppassword
+      DB_SSLMODE: disable
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Grant public schema privileges
-        run: |
-          psql -v ON_ERROR_STOP=1 <<'SQL'
-          GRANT USAGE, CREATE ON SCHEMA public TO postgres;
-          SQL
+      - name: Create Supabase roles
+        run: psql -v ON_ERROR_STOP=1 -c "CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN;"
 
-      - name: Run SQL files (schema → seed → api)
+      - name: Run SQL files
         run: |
           for f in schema seed api; do
-            echo "==> Database/$f.sql"
             psql -v ON_ERROR_STOP=1 -f Database/$f.sql
           done
 
       - name: Build image
-        run: docker build -t backend:test -f backend/Dockerfile backend
+        run: docker build -t backend:test backend
 
       - name: Run container
         run: |
           docker run -d --name backend --network host \
-            -e db_host \
-            -e db_port \
-            -e db_name \
-            -e db_user \
-            -e db_password \
-            -e PORT=8000 \
-            backend:test
+            -e db_host -e db_port -e db_name -e db_user -e db_password -e DB_SSLMODE \
+            -e PORT=8000 backend:test
 
       - name: Health check
         run: |
-          for i in $(seq 1 30); do
+          for i in $(seq 30); do
             body=$(curl -sf http://localhost:8000/health) && break
             sleep 2
           done
