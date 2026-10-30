@@ -27,17 +27,14 @@ SECURITY NOTES
 import hashlib
 import hmac
 import secrets
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
-import psycopg
-from fastapi import Depends, Header, HTTPException, Request, status
-from pydantic import BaseModel, Field
-
 import db
-
+import psycopg
+from fastapi import Header, HTTPException, Request, status
+from pydantic import BaseModel, Field
 
 # ===================================================================
 # Constants
@@ -86,7 +83,7 @@ def verify_password(plain: str, stored: str) -> bool:
     return hmac.compare_digest(digest, stored)
 
 
-def _extract_bearer(authorization: Optional[str]) -> str:
+def _extract_bearer(authorization: str | None) -> str:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -107,7 +104,7 @@ def _extract_bearer(authorization: Optional[str]) -> str:
 # Session validation dependency (THE trust boundary)
 # ===================================================================
 
-def require_actor(authorization: Optional[str] = Header(None, alias="Authorization")) -> UUID:
+def require_actor(authorization: str | None = Header(None, alias="Authorization")) -> UUID:
     """
     Resolve the bearer token to a trusted actor UUID via api.validate_session.
     Never trust X-Actor-Id from the client.
@@ -167,7 +164,7 @@ class CreateBranchIn(BaseModel):
 
 
 class CreateUserIn(BaseModel):
-    branch_id: Optional[UUID] = None
+    branch_id: UUID | None = None
     name: str = Field(..., min_length=1, max_length=200)
     email: str = Field(..., min_length=3, max_length=254)
     password_hash: str = Field(..., min_length=1, max_length=500)
@@ -189,11 +186,11 @@ class SubmitCollectionIn(BaseModel):
 class ReviewCollectionIn(BaseModel):
     collection_id: UUID
     approve: bool
-    notes: Optional[str] = Field(None, max_length=2000)
+    notes: str | None = Field(None, max_length=2000)
 
 
 class ListCollectionsIn(BaseModel):
-    status: Optional[str] = None
+    status: str | None = None
 
 
 class SubmitWeeklyReportIn(BaseModel):
@@ -206,7 +203,7 @@ class SubmitWeeklyReportIn(BaseModel):
 
 
 class AddMemberIn(BaseModel):
-    branch_id: Optional[UUID] = None
+    branch_id: UUID | None = None
     name_en: str = Field(..., min_length=1, max_length=200)
     name_ur: str = Field(..., min_length=1, max_length=200)
     cnic: str = Field(..., min_length=1, max_length=50)
@@ -219,7 +216,7 @@ class SetMemberActiveIn(BaseModel):
 
 
 class SaveNoticeIn(BaseModel):
-    notice_id: Optional[UUID] = None
+    notice_id: UUID | None = None
     title_en: str = Field(..., min_length=1, max_length=200)
     title_ur: str = Field(..., min_length=1, max_length=200)
     content_en: str = Field(..., min_length=1, max_length=20000)
@@ -246,7 +243,7 @@ class ListAuditLogsIn(BaseModel):
 # Auth business logic
 # ===================================================================
 
-def _client_ip(request: Request) -> Optional[str]:
+def _client_ip(request: Request) -> str | None:
     # If behind a trusted reverse proxy, prefer X-Forwarded-For.
     xff = request.headers.get("x-forwarded-for")
     if xff:
@@ -266,7 +263,7 @@ def login(body: LoginIn, request: Request) -> dict:
 
         raw_token = generate_token()
         token_hash = hash_token(raw_token)
-        expires_at = datetime.now(timezone.utc) + SESSION_TTL
+        expires_at = datetime.now(UTC) + SESSION_TTL
 
         db.create_session(conn, row["id"], token_hash, ip, ua, expires_at)
 
@@ -284,7 +281,7 @@ def login(body: LoginIn, request: Request) -> dict:
     }
 
 
-def logout(authorization: Optional[str]) -> dict:
+def logout(authorization: str | None) -> dict:
     token = _extract_bearer(authorization)
     token_hash = hash_token(token)
     with db.connect() as conn:
@@ -298,9 +295,8 @@ def logout(authorization: Optional[str]) -> dict:
 
 def check_db() -> str:
     try:
-        with db.connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1")
+        with db.connect() as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1")
         return "connected"
     except Exception:
         return "disconnected"

@@ -1,13 +1,11 @@
 import os
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional, Sequence
 from uuid import UUID
 
 import psycopg
-from psycopg.rows import dict_row
-from psycopg.types.json import Jsonb
 from dotenv import load_dotenv
+from psycopg.rows import dict_row
 
 load_dotenv(override=True)
 
@@ -32,8 +30,8 @@ def get_login(conn, p_email: str):
         return cur.fetchone()
 
 
-def create_session(conn, p_user: UUID, p_hash: str, p_ip: Optional[str],
-                   p_ua: Optional[str], p_exp: datetime) -> None:
+def create_session(conn, p_user: UUID, p_hash: str, p_ip: str | None,
+                   p_ua: str | None, p_exp: datetime) -> None:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT api.create_session(%s::uuid, %s::char(64), %s::inet, %s, %s::timestamptz)",
@@ -64,7 +62,7 @@ def create_branch(conn, p_actor: UUID, p_code: str, p_name_en: str, p_name_ur: s
         return cur.fetchone()["create_branch"]
 
 
-def create_user(conn, p_actor: UUID, p_branch: Optional[UUID], p_name: str,
+def create_user(conn, p_actor: UUID, p_branch: UUID | None, p_name: str,
                 p_email: str, p_hash: str, p_role: str) -> UUID:
     with conn.cursor() as cur:
         cur.execute(
@@ -95,7 +93,7 @@ def submit_collection(conn, p_actor: UUID, p_title_en: str, p_title_ur: str,
 
 
 def review_collection(conn, p_actor: UUID, p_id: UUID, p_approve: bool,
-                      p_notes: Optional[str]) -> None:
+                      p_notes: str | None) -> None:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT api.review_collection(%s::uuid, %s::uuid, %s, %s)",
@@ -113,7 +111,7 @@ def submit_weekly_report(conn, p_actor: UUID, p_start: date, p_end: date,
         return cur.fetchone()["submit_weekly_report"]
 
 
-def add_member(conn, p_actor: UUID, p_branch: Optional[UUID], p_name_en: str,
+def add_member(conn, p_actor: UUID, p_branch: UUID | None, p_name_en: str,
                p_name_ur: str, p_cnic: str, p_phone: str) -> UUID:
     with conn.cursor() as cur:
         cur.execute(
@@ -133,7 +131,7 @@ def set_member_active(conn, p_actor: UUID, p_id: UUID, p_active: bool) -> None:
 
 # ---------------- notices / inquiries ----------------
 
-def save_notice(conn, p_actor: UUID, p_id: Optional[UUID], p_title_en: str,
+def save_notice(conn, p_actor: UUID, p_id: UUID | None, p_title_en: str,
                 p_title_ur: str, p_content_en: str, p_content_ur: str,
                 p_publish: bool) -> UUID:
     with conn.cursor() as cur:
@@ -174,7 +172,7 @@ def list_users(conn, p_actor: UUID) -> list:
         return cur.fetchone()["data"] or []
 
 
-def list_collections(conn, p_actor: UUID, p_status: Optional[str] = None) -> list:
+def list_collections(conn, p_actor: UUID, p_status: str | None = None) -> list:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT api.list_collections(%s::uuid, %s::public.approval_status) AS data",

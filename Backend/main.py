@@ -1,11 +1,9 @@
-from typing import Optional
 from uuid import UUID
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from fastapi import Depends, Header, Request
-from fastapi.middleware.cors import CORSMiddleware
 import api
+from fastapi import Depends, FastAPI, Header, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 app = FastAPI(
     title="ShipLens Platform API",
@@ -46,7 +44,7 @@ def login(body: api.LoginIn, request: Request):
 
 
 @app.post("/auth/logout")
-def logout(authorization: Optional[str] = Header(None, alias="Authorization")):
+def logout(authorization: str | None = Header(None, alias="Authorization")):
     return api.logout(authorization)
 
 
