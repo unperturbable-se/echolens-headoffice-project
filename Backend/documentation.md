@@ -14,6 +14,8 @@ Authorization: Bearer <token>
 
 The token comes from `POST /auth/login`. It is valid for 8 hours. The actor is always derived from the token, never from the request body.
 
+Passwords are hashed with bcrypt. Clients send plain passwords over HTTPS; the server never accepts pre-made hashes.
+
 ## Response format
 
 Success:
@@ -168,7 +170,7 @@ Auth: Bearer.
 | `branch_id` | UUID | No | Defaults to `null` |
 | `name` | string | Yes | 1 to 200 chars |
 | `email` | string | Yes | 3 to 254 chars |
-| `password_hash` | string | Yes | 1 to 500 chars. Must be pre-hashed, e.g. `pbkdf2_sha256$<iterations>$<salt>$<hex>` |
+| `password` | string | Yes | 8 to 72 chars. Hashed server-side with bcrypt |
 | `role` | string | Yes | 1 to 50 chars |
 
 Response (201): `{ "status": "success", "data": { "id": "uuid" } }`
