@@ -1,6 +1,6 @@
 // Frontend/auth/api_client.js
 
-const API_BASE_URL = "http://127.0.0.1:8000"; //"https://echolens-headoffice-project.onrender.com";
+const API_BASE_URL = "https://echolens-headoffice-project.onrender.com";
 
 const TOKEN_KEY = "shiplens_auth_token";
 const USER_KEY = "shiplens_user_data";
