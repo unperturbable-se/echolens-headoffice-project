@@ -1,152 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShipLens - Finance Reviewer Workspace</title>
-    
-    <!-- External Framework & Library CDNs -->
-    <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
-    <link rel="stylesheet" href="../css/style.css">
-</head>
-<body>
 
+    <!-- External Framework & Library CDNs -->
+    <link rel="stylesheet"
+      href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+  </head>
+  <body>
     <header class="navbar">
-        <div class="brand">
-            <strong>ShipLens 1.0</strong>
-            <span class="badge chip">Finance Reviewer Workspace</span>
-        </div>
-        <nav class="user-nav">
-            <span id="user-display">Loading profile...</span>
-            <button id="logout-btn" class="danger">Logout</button>
-        </nav>
+      <div class="brand">
+        <strong>ShipLens 1.0</strong>
+        <span class="badge chip">Finance Reviewer Workspace</span>
+      </div>
+      <nav class="user-nav">
+        <span id="user-display">Loading profile...</span>
+        <button id="logout-btn" class="danger">Logout</button>
+      </nav>
     </header>
 
     <main class="grid-layout">
-        <!-- Primary Finance Workspace Area -->
-        <section class="main-content">
-            
-            <!-- Quick Metrics Row -->
-            <div class="metrics-row">
-                <article class="box">
-                    <p class="subtext">Pending Review Queue</p>
-                    <h3 id="stat-pending-count">0</h3>
-                </article>
-                <article class="box">
-                    <p class="subtext">Approved Collections (PKR)</p>
-                    <h3 id="stat-approved-sum">0.00</h3>
-                </article>
-                <article class="box">
-                    <p class="subtext">Rejected Submissions</p>
-                    <h3 id="stat-rejected-count">0</h3>
-                </article>
-            </div>
+      <!-- Primary Finance Workspace Area -->
+      <section class="main-content">
+        <!-- Quick Metrics Row -->
+        <div class="metrics-row">
+          <article class="box">
+            <p class="subtext">Pending Review Queue</p>
+            <h3 id="stat-pending-count">0</h3>
+          </article>
+          <article class="box">
+            <p class="subtext">Approved Collections (PKR)</p>
+            <h3 id="stat-approved-sum">0.00</h3>
+          </article>
+          <article class="box">
+            <p class="subtext">Rejected Submissions</p>
+            <h3 id="stat-rejected-count">0</h3>
+          </article>
+        </div>
 
-            <!-- Pending Review Queue -->
-            <section class="box">
-                <header class="box-header">
-                    <h3>Pending Collections Queue</h3>
-                    <button id="refresh-finance-btn" class="accent">Refresh Queue</button>
-                </header>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Branch ID</th>
-                                <th>Title (EN)</th>
-                                <th>Amount (PKR)</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pending-table-body">
-                            <tr>
-                                <td colspan="5" class="text-center">Loading pending review queue...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Reviewed Financial History -->
-            <section class="box">
-                <header class="box-header">
-                    <h3>Collection Review History</h3>
-                </header>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Branch ID</th>
-                                <th>Title (EN)</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Review Notes</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body">
-                            <tr>
-                                <td colspan="6" class="text-center">Loading review history...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+        <!-- Pending Review Queue -->
+        <section class="box">
+          <header class="box-header">
+            <h3>Pending Collections Queue</h3>
+            <button id="refresh-finance-btn"
+              class="accent">Refresh Queue</button>
+          </header>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Branch ID</th>
+                  <th>Title (EN)</th>
+                  <th>Amount (PKR)</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pending-table-body">
+                <tr>
+                  <td colspan="5"
+                    class="text-center">Loading pending review queue...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <!-- Sidebar Analytics -->
-        <aside class="sidebar">
-            <section class="box">
-                <h3>Approval Status Breakdown</h3>
-                <div id="finance-status-chart" class="ct-chart ct-golden-section"></div>
-            </section>
+        <!-- Reviewed Financial History -->
+        <section class="box">
+          <header class="box-header">
+            <h3>Collection Review History</h3>
+          </header>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Branch ID</th>
+                  <th>Title (EN)</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Review Notes</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <tr>
+                  <td colspan="6"
+                    class="text-center">Loading review history...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
 
-            <section class="box">
-                <h3>Collection Volume by Branch</h3>
-                <div id="branch-volume-chart" class="ct-chart ct-golden-section"></div>
-            </section>
-        </aside>
+      <!-- Sidebar Analytics -->
+      <aside class="sidebar">
+        <section class="box">
+          <h3>Approval Status Breakdown</h3>
+          <div id="finance-status-chart"
+            class="ct-chart ct-golden-section"></div>
+        </section>
+
+        <section class="box">
+          <h3>Collection Volume by Branch</h3>
+          <div id="branch-volume-chart"
+            class="ct-chart ct-golden-section"></div>
+        </section>
+      </aside>
     </main>
 
     <!-- Modal: Review / Action Collection -->
     <dialog id="review-modal">
-        <article class="box">
-            <header>
-                <h3 id="review-modal-title">Review Collection Submission</h3>
-            </header>
-            <form id="review-collection-form">
-                <input type="hidden" id="review-collection-id">
-                <p>
+      <article class="box">
+        <header>
+          <h3 id="review-modal-title">Review Collection Submission</h3>
+        </header>
+        <form id="review-collection-form">
+          <input type="hidden" id="review-collection-id">
+          <p>
                     <strong>Title:</strong> <span id="review-detail-title">-</span>
                 </p>
-                <p>
+          <p>
                     <strong>Amount:</strong> PKR <span id="review-detail-amount">0.00</span>
                 </p>
-                <p>
-                    <label for="review-decision">Decision</label>
-                    <select id="review-decision" required>
-                        <option value="APPROVED">APPROVED</option>
-                        <option value="REJECTED">REJECTED</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="review-notes">Review Notes / Rejection Reason</label>
-                    <textarea id="review-notes" rows="3" placeholder="Required if rejecting (enforced by DB check)..."></textarea>
-                </p>
-                <footer class="modal-actions">
-                    <button type="button" id="close-review-modal">Cancel</button>
-                    <button type="submit" class="accent">Submit Review</button>
-                </footer>
-            </form>
-        </article>
+          <p>
+            <label for="review-decision">Decision</label>
+            <select id="review-decision" required>
+              <option value="APPROVED">APPROVED</option>
+              <option value="REJECTED">REJECTED</option>
+            </select>
+          </p>
+          <p>
+            <label for="review-notes">Review Notes / Rejection Reason</label>
+            <textarea id="review-notes" rows="3"
+              placeholder="Required if rejecting (enforced by DB check)..."></textarea>
+          </p>
+          <footer class="modal-actions">
+            <button type="button" id="close-review-modal">Cancel</button>
+            <button type="submit" class="accent">Submit Review</button>
+          </footer>
+        </form>
+      </article>
     </dialog>
 
     <!-- External JavaScript Libraries & Application Modules -->
-    <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
     <script src="../auth/api_client.js"></script>
     <script src="../auth/session.js"></script>
     <script src="finance.js"></script>
-</body>
+  </body>
 </html>

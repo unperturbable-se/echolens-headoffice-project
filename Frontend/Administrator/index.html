@@ -1,155 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShipLens - Administrator Workspace</title>
-    
-    <!-- External Framework & Library CDNs -->
-    <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
-    <link rel="stylesheet" href="../css/style.css">
-</head>
-<body>
 
+    <!-- External Framework & Library CDNs -->
+    <link rel="stylesheet"
+      href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+  </head>
+  <body>
     <header class="navbar">
-        <div class="brand">
-            <strong>ShipLens 1.0</strong>
-            <span class="badge chip">Admin Workspace</span>
-        </div>
-        <nav class="user-nav">
-            <span id="user-display">Loading profile...</span>
-            <button id="logout-btn" class="danger">Logout</button>
-        </nav>
+      <div class="brand">
+        <strong>ShipLens 1.0</strong>
+        <span class="badge chip">Admin Workspace</span>
+      </div>
+      <nav class="user-nav">
+        <span id="user-display">Loading profile...</span>
+        <button id="logout-btn" class="danger">Logout</button>
+      </nav>
     </header>
 
     <main class="grid-layout">
-        <!-- Primary Admin Workspace Area -->
-        <section class="main-content">
-            
-            <!-- Quick System Metrics Row -->
-            <div class="metrics-row">
-                <article class="box">
-                    <p class="subtext">Active Branches</p>
-                    <h3 id="stat-branches-count">0</h3>
-                </article>
-                <article class="box">
-                    <p class="subtext">System Users</p>
-                    <h3 id="stat-users-count">0</h3>
-                </article>
-                <article class="box">
-                    <p class="subtext">Audit Records</p>
-                    <h3 id="stat-audit-count">0</h3>
-                </article>
-            </div>
+      <!-- Primary Admin Workspace Area -->
+      <section class="main-content">
+        <!-- Quick System Metrics Row -->
+        <div class="metrics-row">
+          <article class="box">
+            <p class="subtext">Active Branches</p>
+            <h3 id="stat-branches-count">0</h3>
+          </article>
+          <article class="box">
+            <p class="subtext">System Users</p>
+            <h3 id="stat-users-count">0</h3>
+          </article>
+          <article class="box">
+            <p class="subtext">Audit Records</p>
+            <h3 id="stat-audit-count">0</h3>
+          </article>
+        </div>
 
-            <!-- Branch Directory & Provisioning -->
-            <section class="box">
-                <header class="box-header">
-                    <h3>Branch Directory</h3>
-                    <button id="open-branch-modal" class="accent">Provision New Branch</button>
-                </header>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Name (EN)</th>
-                                <th>City</th>
-                                <th>Status</th>
-                                <th>Created Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="branches-table-body">
-                            <tr>
-                                <td colspan="5" class="text-center">Loading branch directory...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- System User Access Control -->
-            <section class="box">
-                <header class="box-header">
-                    <h3>System Users</h3>
-                    <button id="open-user-modal" class="accent">Create System User</button>
-                </header>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Full Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Branch ID</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body">
-                            <tr>
-                                <td colspan="6" class="text-center">Loading system users...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+        <!-- Branch Directory & Provisioning -->
+        <section class="box">
+          <header class="box-header">
+            <h3>Branch Directory</h3>
+            <button id="open-branch-modal"
+              class="accent">Provision New Branch</button>
+          </header>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Name (EN)</th>
+                  <th>City</th>
+                  <th>Status</th>
+                  <th>Created Date</th>
+                </tr>
+              </thead>
+              <tbody id="branches-table-body">
+                <tr>
+                  <td colspan="5"
+                    class="text-center">Loading branch directory...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <!-- Sidebar Analytics & Feed -->
-        <aside class="sidebar">
-            <section class="box">
-                <h3>Role Distribution</h3>
-                <div id="roles-chart" class="ct-chart ct-golden-section"></div>
-            </section>
+        <!-- System User Access Control -->
+        <section class="box">
+          <header class="box-header">
+            <h3>System Users</h3>
+            <button id="open-user-modal"
+              class="accent">Create System User</button>
+          </header>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Branch ID</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr>
+                  <td colspan="6"
+                    class="text-center">Loading system users...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
 
-            <section class="box">
-                <h3>System Audit Log Stream</h3>
-                <div id="audit-feed" class="audit-feed-list">
-                    <p class="subtext">Fetching audit logs...</p>
-                </div>
-            </section>
-        </aside>
+      <!-- Sidebar Analytics & Feed -->
+      <aside class="sidebar">
+        <section class="box">
+          <h3>Role Distribution</h3>
+          <div id="roles-chart" class="ct-chart ct-golden-section"></div>
+        </section>
+
+        <section class="box">
+          <h3>System Audit Log Stream</h3>
+          <div id="audit-feed" class="audit-feed-list">
+            <p class="subtext">Fetching audit logs...</p>
+          </div>
+        </section>
+      </aside>
     </main>
 
     <!-- Modal: Provision Branch -->
     <dialog id="branch-modal">
-        <article class="box">
-            <header>
-                <h3>Provision New Branch</h3>
-            </header>
-            <form id="create-branch-form">
-                <p>
-                    <label for="branch-code">Branch Code</label>
-                    <input type="text" id="branch-code" required placeholder="e.g., KHI-01">
-                </p>
-                <p>
-                    <label for="branch-name-en">Branch Name (English)</label>
-                    <input type="text" id="branch-name-en" required placeholder="Karachi Central">
-                </p>
-                <p>
-                    <label for="branch-name-ur">Branch Name (Urdu)</label>
-                    <input type="text" id="branch-name-ur" required placeholder="کراچی سینٹرل" dir="rtl">
-                </p>
-                <p>
-                    <label for="branch-city">City</label>
-                    <input type="text" id="branch-city" required placeholder="Karachi">
-                </p>
-                <footer class="modal-actions">
-                    <button type="button" id="close-branch-modal">Cancel</button>
-                    <button type="submit" class="accent">Save Branch</button>
-                </footer>
-            </form>
-        </article>
+      <article class="box">
+        <header>
+          <h3>Provision New Branch</h3>
+        </header>
+        <form id="create-branch-form">
+          <p>
+            <label for="branch-code">Branch Code</label>
+            <input type="text" id="branch-code" required
+              placeholder="e.g., KHI-01">
+          </p>
+          <p>
+            <label for="branch-name-en">Branch Name (English)</label>
+            <input type="text" id="branch-name-en" required
+              placeholder="Karachi Central">
+          </p>
+          <p>
+            <label for="branch-name-ur">Branch Name (Urdu)</label>
+            <input type="text" id="branch-name-ur" required
+              placeholder="کراچی سینٹرل" dir="rtl">
+          </p>
+          <p>
+            <label for="branch-city">City</label>
+            <input type="text" id="branch-city" required placeholder="Karachi">
+          </p>
+          <footer class="modal-actions">
+            <button type="button" id="close-branch-modal">Cancel</button>
+            <button type="submit" class="accent">Save Branch</button>
+          </footer>
+        </form>
+      </article>
     </dialog>
 
     <!-- Modal: Create User -->
     <dialog id="user-modal">
-        <article class="box">
-            <header>
-                <h3>Create System User</h3>
-            </header>
-            <form id="create-user-form">
-                <p>
+      <article class="box">
+        <header>
+          <h3>Create System User</h3>
+        </header>
+        <form id="create-user-form">
+          <p>
                     <label for="user

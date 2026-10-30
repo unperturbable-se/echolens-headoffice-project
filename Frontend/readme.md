@@ -1,6 +1,9 @@
 # ShipLens 1.0 — Frontend Portal
 
-The client-side interface for the ShipLens Branch-to-Head-Office Management Platform. Built with light, framework-less Web Standards (HTML5, Vanilla JavaScript) using **Missing.css** for classless UI styling and **Chartist.js** for SVG analytics charts.
+The client-side interface for the ShipLens Branch-to-Head-Office Management
+Platform. Built with light, framework-less Web Standards (HTML5, Vanilla
+JavaScript) using **Missing.css** for classless UI styling and **Chartist.js**
+for SVG analytics charts.
 
 ---
 
@@ -30,3 +33,4 @@ Frontend/
 └── Content/                    # CONTENT_EDITOR workspace
     ├── index.html
     └── content.js
+```
