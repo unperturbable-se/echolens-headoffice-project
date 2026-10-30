@@ -25,16 +25,17 @@ SECURITY NOTES
 """
 
 import hashlib
-import bcrypt
 import secrets
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-import db
+import bcrypt
 import psycopg
 from fastapi import Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
+
+import db
 
 # ===================================================================
 # Constants

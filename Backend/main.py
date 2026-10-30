@@ -1,9 +1,10 @@
 from uuid import UUID
 
-import api
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+import api
 
 app = FastAPI(
     title="ShipLens Platform API",
