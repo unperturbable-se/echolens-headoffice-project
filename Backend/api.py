@@ -31,11 +31,10 @@ from decimal import Decimal
 from uuid import UUID
 
 import bcrypt
+import db
 import psycopg
 from fastapi import Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
-
-import db
 
 # ===================================================================
 # Constants
