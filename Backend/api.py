@@ -25,7 +25,7 @@ SECURITY NOTES
 """
 
 import hashlib
-import hmac
+import bcrypt
 import secrets
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -42,45 +42,34 @@ from pydantic import BaseModel, Field
 
 SESSION_TTL = timedelta(hours=8)
 TOKEN_BYTES = 32
-ALLOWED_ORIGINS = [o.strip() for o in __import__(
-    "os").environ.get("cors_origins", "").split(",") if o.strip()]
+ALLOWED_ORIGINS = [
+    "https://echolens-headoffice-project.onrender.com",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+]#[o.strip() for o in __import__(
+    #"os").environ.get("cors_origins", "").split(",") if o.strip()]
 
 
-# ===================================================================
-# Security helpers
-# ===================================================================
 
 def generate_token() -> str:
-    """Cryptographically-random opaque bearer token."""
     return secrets.token_urlsafe(TOKEN_BYTES)
 
 
 def hash_token(token: str) -> str:
-    """SHA-256 hex digest — what we persist in user_sessions.token_hash."""
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def verify_password(plain: str, stored: str) -> bool:
-    """
-    Constant-time verification.
+def hash_password(plain: str) -> str:
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
-    Supported stored formats:
-      * 'pbkdf2_sha256$<iterations>$<salt>$<hex>'  (preferred)
-      * plain sha256 hex                          (legacy fallback)
-    """
-    if not stored:
+
+def verify_password(plain: str, stored: str) -> bool:
+    try:
+        return bcrypt.checkpw(plain.encode(), stored.encode())
+    except ValueError:
         return False
-    if stored.startswith("pbkdf2_sha256$"):
-        try:
-            _, iters_s, salt, expected = stored.split("$", 3)
-            digest = hashlib.pbkdf2_hmac(
-                "sha256", plain.encode(), salt.encode(), int(iters_s)
-            ).hex()
-            return hmac.compare_digest(digest, expected)
-        except (ValueError, TypeError):
-            return False
-    digest = hashlib.sha256(plain.encode()).hexdigest()
-    return hmac.compare_digest(digest, stored)
 
 
 def _extract_bearer(authorization: str | None) -> str:
@@ -98,7 +87,6 @@ def _extract_bearer(authorization: str | None) -> str:
             headers={"WWW-Authenticate": "Bearer"},
         )
     return token
-
 
 # ===================================================================
 # Session validation dependency (THE trust boundary)
