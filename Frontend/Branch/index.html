@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShipLens - Branch Lead Workspace</title>
+    
+    <!-- External Framework & Library CDNs -->
+    <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="brand">
+            <strong>ShipLens 1.0</strong>
+            <span class="badge chip">Branch Lead Workspace</span>
+        </div>
+        <nav class="user-nav">
+            <span id="user-display">Loading profile...</span>
+            <button id="logout-btn" class="danger">Logout</button>
+        </nav>
+    </header>
+
+    <main class="grid-layout">
+        <!-- Primary Branch Workspace Area -->
+        <section class="main-content">
+            
+            <!-- Quick Metrics Row -->
+            <div class="metrics-row">
+                <article class="box">
+                    <p class="subtext">Registered Members</p>
+                    <h3 id="stat-members-count">0</h3>
+                </article>
+                <article class="box">
+                    <p class="subtext">Submitted Collections</p>
+                    <h3 id="stat-collections-count">0</h3>
+                </article>
+                <article class="box">
+                    <p class="subtext">Weekly Reports Submitted</p>
+                    <h3 id="stat-reports-count">0</h3>
+                </article>
+            </div>
+
+            <!-- Member Directory & Registration -->
+            <section class="box">
+                <header class="box-header">
+                    <h3>Branch Members</h3>
+                    <button id="open-member-modal" class="accent">Add Member</button>
+                </header>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name (EN)</th>
+                                <th>Name (UR)</th>
+                                <th>CNIC / ID</th>
+                                <th>Phone</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="members-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading branch members...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Financial Collections Logging -->
+            <section class="box">
+                <header class="box-header">
+                    <h3>Financial Collections Log</h3>
+                    <button id="open-collection-modal" class="accent">Log Collection</button>
+                </header>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title (EN)</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Review Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="collections-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center">Loading collection records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Weekly Activity Reports -->
+            <section class="box">
+                <header class="box-header">
+                    <h3>Weekly Activity Reports</h3>
+                    <button id="open-report-modal" class="accent">Submit Weekly Report</button>
+                </header>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Week Period</th>
+                                <th>Summary (EN)</th>
+                                <th>Active Members</th>
+                                <th>New Registrations</th>
+                                <th>Submitted Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center">Loading weekly reports...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <!-- Sidebar Analytics -->
+        <aside class="sidebar">
+            <section class="box">
+                <h3>Member Growth Trajectory</h3>
+                <div id="members-chart" class="ct-chart ct-golden-section"></div>
+            </section>
+
+            <section class="box">
+                <h3>Collection Status Breakdown</h3>
+                <div id="collections-status-chart" class="ct-chart ct-golden-section"></div>
+            </section>
+        </aside>
+    </main>
+
+    <!-- Modal: Add Member -->
+    <dialog id="member-modal">
+        <article class="box">
+            <header>
+                <h3>Register Branch Member</h3>
+            </header>
+            <form id="add-member-form">
+                <p>
+                    <label for="member-name-en">Full Name (English)</label>
+                    <input type="text" id="member-name-en" required placeholder="Ahmed Ali">
+                </p>
+                <p>
+                    <label for="member-name-ur">Full Name (Urdu)</label>
+                    <input type="text" id="member-name-ur" placeholder="احمد علی" dir="rtl">
+                </p>
+                <p>
+                    <label for="member-cnic">CNIC / Government ID</label>
+                    <input type="text" id="member-cnic" placeholder="42101-XXXXXXX-X">
+                </p>
+                <p>
+                    <label for="member-phone">Phone Number</label>
+                    <input type="tel" id="member-phone" placeholder="+92 300 1234567">
+                </p>
+                <footer class="modal-actions">
+                    <button type="button" id="close-member-modal">Cancel</button>
+                    <button type="submit" class="accent">Save Member</button>
+                </footer>
+            </form>
+        </article>
+    </dialog>
+
+    <!-- Modal: Log Collection -->
+    <dialog id="collection-modal">
+        <article class="box">
+            <header>
+                <h3>Log Financial Collection</h3>
+            </header>
+            <form id="submit-collection-form">
+                <p>
+                    <label for="collection-title-en">Collection Title (English)</label>
+                    <input type="text" id="collection-title-en" required placeholder="Weekly Donation Drive">
+                </p>
+                <p>
+                    <label for="collection-title-ur">Collection Title (Urdu)</label>
+                    <input type="text" id="collection-title-ur" placeholder="ہفتہ وار عطیات" dir="rtl">
+                </p>
+                <p>
+                    <label for="collection-amount">Amount (PKR)</label>
+                    <input type="number" id="collection-amount" required min="0" step="0.01" placeholder="5000">
+                </p>
+                <p>
+                    <label for="collection-date">Collection Date</label>
+                    <input type="date" id="collection-date" required>
+                </p>
+                <footer class="modal-actions">
+                    <button type="button" id="close-collection-modal">Cancel</button>
+                    <button type="submit" class="accent">Submit Collection</button>
+                </footer>
+            </form>
+        </article>
+    </dialog>
+
+    <!-- Modal: Submit Weekly Report -->
+    <dialog id="report-modal">
+        <article class="box">
+            <header>
+                <h3>Submit Weekly Report</h3>
+            </header>
+            <form id="submit-report-form">
+                <p>
+                    <label for="report-start-date">Week Start Date</label>
+                    <input type="date" id="report-start-date" required>
+                </p>
+                <p>
+                    <label for="report-end-date">Week End Date</label>
+                    <input type="date" id="report-end-date" required>
+                </p>
+                <p>
+                    <label for="report-summary-en">Activity Summary (English)</label>
+                    <textarea id="report-summary-en" required rows="3" placeholder="Summary of weekly operations..."></textarea>
+                </p>
+                <p>
+                    <label for="report-summary-ur">Activity Summary (Urdu)</label>
+                    <textarea id="report-summary-ur" rows="3" placeholder="ہفتہ وار کارروائی کا خلاصہ..." dir="rtl"></textarea>
+                </p>
+                <p>
+                    <label for="report-total-active">Total Active Members</label>
+                    <input type="number" id="report-total-active" required min="0" placeholder="25">
+                </p>
+                <p>
+                    <label for="report-new-regs">New Registrations This Week</label>
+                    <input type="number" id="report-new-regs" required min="0" placeholder="3">
+                </p>
+                <footer class="modal-actions">
+                    <button type="button" id="close-report-modal">Cancel</button>
+                    <button type="submit" class="accent">Submit Report</button>
+                </footer>
+            </form>
+        </article>
+    </dialog>
+
+    <!-- External JavaScript Libraries & Application Modules -->
+    <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script src="../auth/api_client.js"></script>
+    <script src="../auth/session.js"></script>
+    <script src="branch.js"></script>
+</body>
+</html>

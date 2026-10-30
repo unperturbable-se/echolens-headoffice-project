@@ -1,0 +1,62 @@
+/* Frontend/css/style.css */
+
+body.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg-surface, #f8f9fa);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: var(--bg, #ffffff);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.alert-error {
+    background: #ffebe9;
+    color: #cf222e;
+    border: 1px solid rgba(255, 129, 130, 0.4);
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.full-width {
+    width: 100%;
+}
+
+/* Dual Column Layout for Bilingual Forms */
+.modal-large {
+    max-width: 750px;
+    width: 90%;
+}
+
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .grid-2col {
+        grid-template-columns: 1fr;
+    }
+}
