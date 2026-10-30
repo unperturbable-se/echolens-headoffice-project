@@ -19,14 +19,14 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
     SELECT u.id, u.password_hash, u.role, u.branch_id FROM public.users u WHERE u.email = p_email AND u.is_active;
 $$;
 
-CREATE OR REPLACE FUNCTION api.create_session(p_user UUID, p_hash CHAR, p_ip INET, p_ua TEXT, p_exp TIMESTAMPTZ)
+CREATE OR REPLACE FUNCTION api.create_session(p_user UUID, p_hash CHAR(64), p_ip INET, p_ua TEXT, p_exp TIMESTAMPTZ)
 RETURNS VOID LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$
     UPDATE public.users SET last_login_at = now() WHERE id = p_user;
     INSERT INTO public.user_sessions(user_id, token_hash, ip_address, user_agent, expires_at)
     VALUES (p_user, p_hash, p_ip, p_ua, p_exp);
 $$;
 
-CREATE OR REPLACE FUNCTION api.validate_session(p_hash CHAR)
+CREATE OR REPLACE FUNCTION api.validate_session(p_hash CHAR(64))
 RETURNS TABLE(user_id UUID, role public.user_role, branch_id UUID)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
     SELECT u.id, u.role, u.branch_id FROM public.user_sessions s
@@ -34,7 +34,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
     WHERE s.token_hash = p_hash AND s.expires_at > now() AND u.is_active;
 $$;
 
-CREATE OR REPLACE FUNCTION api.delete_session(p_hash CHAR)
+CREATE OR REPLACE FUNCTION api.delete_session(p_hash CHAR(64))
 RETURNS VOID LANGUAGE sql SECURITY DEFINER SET search_path = '' AS $$
     DELETE FROM public.user_sessions WHERE token_hash = p_hash;
 $$;

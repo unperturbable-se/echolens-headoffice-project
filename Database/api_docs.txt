@@ -1,0 +1,54 @@
+//actual function
+CREATE OR REPLACE FUNCTION api.get_login(p_email public.citext)
+CREATE OR REPLACE FUNCTION api.create_session(p_user UUID, p_hash CHAR, p_ip INET, p_ua TEXT, p_exp TIMESTAMPTZ)
+CREATE OR REPLACE FUNCTION api.validate_session(p_hash CHAR)
+CREATE OR REPLACE FUNCTION api.delete_session(p_hash CHAR)
+CREATE OR REPLACE FUNCTION api.create_branch(p_actor UUID, p_code TEXT, p_name_en TEXT, p_name_ur TEXT, p_city TEXT, p_addr_en TEXT, p_addr_ur TEXT)
+CREATE OR REPLACE FUNCTION api.create_user(p_actor UUID, p_branch UUID, p_name TEXT, p_email public.citext, p_hash TEXT, p_role public.user_role)
+CREATE OR REPLACE FUNCTION api.set_user_active(p_actor UUID, p_id UUID, p_active BOOLEAN)
+CREATE OR REPLACE FUNCTION api.submit_collection(p_actor UUID, p_title_en TEXT, p_title_ur TEXT, p_amount NUMERIC, p_date DATE)
+CREATE OR REPLACE FUNCTION api.review_collection(p_actor UUID, p_id UUID, p_approve BOOLEAN, p_notes TEXT)
+CREATE OR REPLACE FUNCTION api.submit_weekly_report(p_actor UUID, p_start DATE, p_end DATE, p_en TEXT, p_ur TEXT, p_active INT, p_new INT)
+CREATE OR REPLACE FUNCTION api.add_member(p_actor UUID, p_branch UUID, p_name_en TEXT, p_name_ur TEXT, p_cnic TEXT, p_phone TEXT)
+CREATE OR REPLACE FUNCTION api.set_member_active(p_actor UUID, p_id UUID, p_active BOOLEAN)
+CREATE OR REPLACE FUNCTION api.save_notice(p_actor UUID, p_id UUID, p_title_en TEXT, p_title_ur TEXT, p_content_en TEXT, p_content_ur TEXT, p_publish BOOLEAN)
+CREATE OR REPLACE FUNCTION api.submit_inquiry(p_name TEXT, p_email public.citext, p_subject TEXT, p_message TEXT)
+CREATE OR REPLACE FUNCTION api.resolve_inquiry(p_actor UUID, p_id UUID)
+CREATE OR REPLACE FUNCTION api.list_branches(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_users(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_collections(p_actor UUID, p_status public.approval_status DEFAULT NULL)
+CREATE OR REPLACE FUNCTION api.list_weekly_reports(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_members(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_notices(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_inquiries(p_actor UUID)
+CREATE OR REPLACE FUNCTION api.list_audit_logs(p_actor UUID, p_limit INT DEFAULT 100)
+CREATE OR REPLACE FUNCTION api.list_published_notices()
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA api, private FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA api TO app_backend;
+
+//python implementation
+
+        cur.execute("SELECT * FROM api.get_login(%s::public.citext)", (p_email,))
+            "SELECT api.create_session(%s::uuid, %s::char, %s::inet, %s, %s::timestamptz)",
+        cur.execute("SELECT * FROM api.validate_session(%s::char)", (p_hash,))
+        cur.execute("SELECT api.delete_session(%s::char)", (p_hash,))
+            "SELECT api.create_branch(%s::uuid, %s, %s, %s, %s, %s, %s)",
+            "SELECT api.create_user(%s::uuid, %s::uuid, %s, %s::public.citext, %s, %s::public.user_role)",
+            "SELECT api.set_user_active(%s::uuid, %s::uuid, %s)",
+            "SELECT api.submit_collection(%s::uuid, %s, %s, %s::numeric, %s::date)",
+            "SELECT api.review_collection(%s::uuid, %s::uuid, %s, %s)",
+            "SELECT api.submit_weekly_report(%s::uuid, %s::date, %s::date, %s, %s, %s::int, %s::int)",
+            "SELECT api.add_member(%s::uuid, %s::uuid, %s, %s, %s, %s)",
+            "SELECT api.set_member_active(%s::uuid, %s::uuid, %s)",
+            "SELECT api.save_notice(%s::uuid, %s::uuid, %s, %s, %s, %s, %s)",
+            "SELECT api.submit_inquiry(%s, %s::public.citext, %s, %s)",
+            "SELECT api.resolve_inquiry(%s::uuid, %s::uuid)",
+        cur.execute("SELECT api.list_branches(%s::uuid) AS data", (p_actor,))
+        cur.execute("SELECT api.list_users(%s::uuid) AS data", (p_actor,))
+            "SELECT api.list_collections(%s::uuid, %s::public.approval_status) AS data",
+        cur.execute("SELECT api.list_weekly_reports(%s::uuid) AS data", (p_actor,))
+        cur.execute("SELECT api.list_members(%s::uuid) AS data", (p_actor,))
+        cur.execute("SELECT api.list_notices(%s::uuid) AS data", (p_actor,))
+        cur.execute("SELECT api.list_inquiries(%s::uuid) AS data", (p_actor,))
+            "SELECT api.list_audit_logs(%s::uuid, %s::int) AS data",
+        cur.execute("SELECT api.list_published_notices() AS data")

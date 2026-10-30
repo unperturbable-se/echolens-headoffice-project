@@ -36,20 +36,20 @@ def create_session(conn, p_user: UUID, p_hash: str, p_ip: Optional[str],
                    p_ua: Optional[str], p_exp: datetime) -> None:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT api.create_session(%s::uuid, %s::char, %s::inet, %s, %s::timestamptz)",
+            "SELECT api.create_session(%s::uuid, %s::char(64), %s::inet, %s, %s::timestamptz)",
             (p_user, p_hash, p_ip, p_ua, p_exp),
         )
 
 
 def validate_session(conn, p_hash: str):
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM api.validate_session(%s::char)", (p_hash,))
+        cur.execute("SELECT * FROM api.validate_session(%s::char(64))", (p_hash,))
         return cur.fetchone()
 
 
 def delete_session(conn, p_hash: str) -> None:
     with conn.cursor() as cur:
-        cur.execute("SELECT api.delete_session(%s::char)", (p_hash,))
+        cur.execute("SELECT api.delete_session(%s::char(64))", (p_hash,))
 
 
 # ---------------- branches / users ----------------

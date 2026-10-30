@@ -20,11 +20,8 @@ SECURITY NOTES
 3. `verify_password` uses hmac.compare_digest (constant-time).
 4. `api.get_login` returns password_hash — it is consumed here and never
    forwarded to the client.
-5. IMPORTANT — schema bug in the provided SQL: `api.create_session`,
-   `api.validate_session`, `api.delete_session` declare `p_hash CHAR`.
-   In PostgreSQL `CHAR` alone is `char(1)`, so a 64-char hash is
-   truncated to a single byte and session lookup becomes trivially
-   guessable. FIX THE SCHEMA to `TEXT` (or `CHAR(64)`) BEFORE DEPLOYMENT.
+5. Session hash parameters and the `user_sessions.token_hash` column must
+    use `CHAR(64)` to match the 64-character SHA-256 hex digest.
 """
 
 import hashlib
@@ -48,7 +45,8 @@ import db
 
 SESSION_TTL = timedelta(hours=8)
 TOKEN_BYTES = 32
-ALLOWED_ORIGINS = [o.strip() for o in __import__("os").environ.get("cors_origins", "").split(",") if o.strip()]
+ALLOWED_ORIGINS = [o.strip() for o in __import__(
+    "os").environ.get("cors_origins", "").split(",") if o.strip()]
 
 
 # ===================================================================
@@ -507,7 +505,8 @@ def list_published_notices() -> dict:
 def submit_inquiry(body: SubmitInquiryIn) -> dict:
     try:
         with db.connect() as conn:
-            db.submit_inquiry(conn, body.name, body.email, body.subject, body.message)
+            db.submit_inquiry(conn, body.name, body.email,
+                              body.subject, body.message)
     except psycopg.Error as e:
         raise _map_db_error(e)
     return {"status": "success"}
