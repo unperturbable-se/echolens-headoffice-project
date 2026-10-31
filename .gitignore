@@ -1,8 +1,9 @@
 # Editor & tooling
-.vscode/
-.agents/
+*.vscode/
+*.agents/
 
 # Local preview / scratch files
 __preview*.html
 *.log
 .DS_Store
+*skills*.json
