@@ -1,4 +1,4 @@
-// Frontend/Branch/branch.js
+// Branch workspace controller
 
 document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = enforceSessionGuard(["BRANCH_LEAD"]);
@@ -14,7 +14,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-member-modal").addEventListener(
     "click",
-    () => memberModal.showModal(),
+    () => {
+      document.getElementById("member-error").style.display = "none";
+      memberModal.showModal();
+    },
   );
   document.getElementById("close-member-modal").addEventListener(
     "click",
@@ -23,7 +26,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-collection-modal").addEventListener(
     "click",
-    () => collectionModal.showModal(),
+    () => {
+      document.getElementById("collection-error").style.display = "none";
+      collectionModal.showModal();
+    },
   );
   document.getElementById("close-collection-modal").addEventListener(
     "click",
@@ -32,7 +38,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-report-modal").addEventListener(
     "click",
-    () => reportModal.showModal(),
+    () => {
+      document.getElementById("report-error").style.display = "none";
+      reportModal.showModal();
+    },
   );
   document.getElementById("close-report-modal").addEventListener(
     "click",
@@ -43,6 +52,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("collection-date").value = today;
   document.getElementById("report-end-date").value = today;
 
+  wireCnicFormatting();
+  wirePhoneFormatting();
+
   await refreshBranchDashboard();
 
   // POST /members
@@ -50,13 +62,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const memberError = document.getElementById("member-error");
+      memberError.style.display = "none";
+
+      const cnic = document.getElementById("member-cnic").value.trim();
+      const phone = document.getElementById("member-phone").value.trim();
+
+      if (!/^\d{5}-\d{7}-\d$/.test(cnic)) {
+        showInlineError(
+          memberError,
+          "Enter the CNIC as 13 digits: 42101-1234567-1.",
+        );
+        document.getElementById("member-cnic").focus();
+        return;
+      }
+
+      if (!/^\+92 \d{3} \d{7}$/.test(phone)) {
+        showInlineError(memberError, "Enter the phone as +92 300 1234567.");
+        document.getElementById("member-phone").focus();
+        return;
+      }
+
       const payload = {
         branch_id: currentUser.branch_id || null,
         name_en: document.getElementById("member-name-en").value.trim(),
         name_ur: document.getElementById("member-name-ur").value.trim() ||
           document.getElementById("member-name-en").value.trim(),
-        cnic: document.getElementById("member-cnic").value.trim() || "N/A",
-        phone: document.getElementById("member-phone").value.trim() || "N/A",
+        cnic: cnic,
+        phone: phone,
       };
 
       try {
@@ -68,8 +101,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         memberModal.close();
         e.target.reset();
         await loadMembers();
+        showToast("Member registered.", "success");
       } catch (err) {
-        alert(err.message || "Failed to register member.");
+        showInlineError(
+          memberError,
+          err.message || "Could not register this member.",
+        );
       }
     },
   );
@@ -79,11 +116,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const collectionError = document.getElementById("collection-error");
+      collectionError.style.display = "none";
+
+      const amount = parseFloat(
+        document.getElementById("collection-amount").value,
+      );
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showInlineError(
+          collectionError,
+          "Enter a collection amount above zero.",
+        );
+        document.getElementById("collection-amount").focus();
+        return;
+      }
+
       const payload = {
         title_en: document.getElementById("collection-title-en").value.trim(),
         title_ur: document.getElementById("collection-title-ur").value.trim() ||
           document.getElementById("collection-title-en").value.trim(),
-        amount: parseFloat(document.getElementById("collection-amount").value),
+        amount: amount,
         collection_date: document.getElementById("collection-date").value,
       };
 
@@ -95,9 +148,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         await handleApiResponse(res);
         collectionModal.close();
         e.target.reset();
+        document.getElementById("collection-date").value = today;
         await loadCollections();
+        showToast("Collection sent for finance review.", "success");
       } catch (err) {
-        alert(err.message || "Failed to submit collection log.");
+        showInlineError(
+          collectionError,
+          err.message || "Could not submit this collection.",
+        );
       }
     },
   );
@@ -107,9 +165,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const reportError = document.getElementById("report-error");
+      reportError.style.display = "none";
+
+      const weekStart = document.getElementById("report-start-date").value;
+      const weekEnd = document.getElementById("report-end-date").value;
+
+      if (weekStart && weekEnd && weekEnd < weekStart) {
+        showInlineError(
+          reportError,
+          "The week end date cannot be before the week start date.",
+        );
+        document.getElementById("report-end-date").focus();
+        return;
+      }
+
       const payload = {
-        week_start: document.getElementById("report-start-date").value,
-        week_end: document.getElementById("report-end-date").value,
+        week_start: weekStart,
+        week_end: weekEnd,
         summary_en: document.getElementById("report-summary-en").value.trim(),
         summary_ur: document.getElementById("report-summary-ur").value.trim() ||
           document.getElementById("report-summary-en").value.trim(),
@@ -131,13 +204,53 @@ document.addEventListener("DOMContentLoaded", async () => {
         await handleApiResponse(res);
         reportModal.close();
         e.target.reset();
+        document.getElementById("report-end-date").value = today;
         await loadWeeklyReports();
+        showToast("Weekly report submitted.", "success");
       } catch (err) {
-        alert(err.message || "Failed to submit weekly report.");
+        showInlineError(
+          reportError,
+          err.message || "Could not submit this weekly report.",
+        );
       }
     },
   );
 });
+
+/**
+ * Format CNIC input as 42101-1234567-1 while typing.
+ */
+function wireCnicFormatting() {
+  const input = document.getElementById("member-cnic");
+  input.addEventListener("input", () => {
+    const digits = input.value.replace(/\D/g, "").slice(0, 13);
+    let formatted = digits;
+    if (digits.length > 5) formatted = `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    if (digits.length > 12) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${
+        digits.slice(12)
+      }`;
+    }
+    input.value = formatted;
+  });
+}
+
+/**
+ * Format phone input as +92 300 1234567 while typing.
+ */
+function wirePhoneFormatting() {
+  const input = document.getElementById("member-phone");
+  input.addEventListener("input", () => {
+    let digits = input.value.replace(/\D/g, "");
+    if (digits.startsWith("92")) digits = digits.slice(2);
+    else if (digits.startsWith("0")) digits = digits.slice(1);
+    digits = digits.slice(0, 10);
+    let formatted = "+92";
+    if (digits.length > 0) formatted += ` ${digits.slice(0, 3)}`;
+    if (digits.length > 3) formatted += ` ${digits.slice(3)}`;
+    input.value = formatted;
+  });
+}
 
 async function refreshBranchDashboard() {
   await Promise.all([
@@ -158,7 +271,7 @@ async function loadMembers() {
 
     if (members.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="7" class="text-center">No branch members registered.</td></tr>';
+        '<tr><td colspan="7" class="text-center">No members yet. Register the first member.</td></tr>';
       return;
     }
 
@@ -177,13 +290,9 @@ async function loadMembers() {
                 <td dir="rtl">${
         escapeHtml(m.name_ur || m.full_name_ur || "-")
       }</td>
-                <td><code>${
-        escapeHtml(m.cnic || m.cnic_or_id || "-")
-      }</code></td>
+                <td><code>${escapeHtml(m.cnic || m.cnic_or_id || "-")}</code></td>
                 <td>${escapeHtml(m.phone || "-")}</td>
-                <td>${
-        new Date(m.joined_date || m.created_at).toLocaleDateString()
-      }</td>
+                <td>${formatDate(m.joined_date || m.created_at)}</td>
                 <td><span class="badge ${m.is_active ? "ok" : "danger"}">${
         m.is_active ? "Active" : "Inactive"
       }</span></td>
@@ -197,6 +306,11 @@ async function loadMembers() {
     renderMemberTrajectoryChart(members);
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 7, "branch members");
+    document.getElementById("stat-members-count").innerText = "–";
+    resetChart("#members-chart");
+    document.querySelector("#members-chart").innerHTML =
+      '<p class="subtext">Member growth is unavailable right now.</p>';
   }
 }
 
@@ -208,8 +322,12 @@ async function toggleMemberActive(memberId, newActiveState) {
     });
     await handleApiResponse(res);
     await loadMembers();
+    showToast(
+      newActiveState ? "Member reactivated." : "Member deactivated.",
+      "success",
+    );
   } catch (err) {
-    alert(err.message || "Failed to update member status.");
+    showToast(err.message || "Could not update member status.");
   }
 }
 
@@ -228,7 +346,7 @@ async function loadCollections() {
 
     if (collections.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center">No collection logs recorded.</td></tr>';
+        '<tr><td colspan="5" class="text-center">No collections logged yet.</td></tr>';
       return;
     }
 
@@ -245,11 +363,13 @@ async function loadCollections() {
       row.innerHTML = `
                 <td>${escapeHtml(c.title_en)}</td>
                 <td><strong>PKR ${
-        parseFloat(c.amount).toLocaleString()
+        parseFloat(c.amount || 0).toLocaleString()
       }</strong></td>
-                <td>${new Date(c.collection_date).toLocaleDateString()}</td>
-                <td><span class="${badgeClass}">${c.status}</span></td>
-                <td>${escapeHtml(c.review_notes || "-")}</td>
+                <td>${formatDate(c.collection_date)}</td>
+                <td><span class="${badgeClass}">${
+        escapeHtml(c.status)
+      }</span></td>
+                <td>${escapeHtml(c.review_notes || c.notes || "-")}</td>
             `;
       tbody.appendChild(row);
     });
@@ -257,6 +377,11 @@ async function loadCollections() {
     renderCollectionStatusChart(statusCounts);
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 5, "collections");
+    document.getElementById("stat-collections-count").innerText = "–";
+    resetChart("#collections-status-chart");
+    document.querySelector("#collections-status-chart").innerHTML =
+      '<p class="subtext">Collection status is unavailable right now.</p>';
   }
 }
 
@@ -271,7 +396,7 @@ async function loadWeeklyReports() {
 
     if (reports.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center">No weekly reports submitted.</td></tr>';
+        '<tr><td colspan="5" class="text-center">No weekly reports yet.</td></tr>';
       return;
     }
 
@@ -282,17 +407,25 @@ async function loadWeeklyReports() {
                 <td>${escapeHtml(r.summary_en)}</td>
                 <td>${r.total_members_active}</td>
                 <td>+${r.new_registrations}</td>
-                <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                <td>${formatDate(r.created_at)}</td>
             `;
       tbody.appendChild(row);
     });
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 5, "weekly reports");
+    document.getElementById("stat-reports-count").innerText = "–";
   }
 }
 
 function renderMemberTrajectoryChart(members) {
-  if (members.length === 0 || typeof Chartist === "undefined") return;
+  resetChart("#members-chart");
+
+  if (members.length === 0 || typeof Chartist === "undefined") {
+    document.querySelector("#members-chart").innerHTML =
+      '<p class="subtext">Register members to see growth here.</p>';
+    return;
+  }
 
   const monthCounts = {};
   members.forEach((m) => {
@@ -313,6 +446,8 @@ function renderMemberTrajectoryChart(members) {
 }
 
 function renderCollectionStatusChart(statusCounts) {
+  resetChart("#collections-status-chart");
+
   if (typeof Chartist === "undefined") return;
 
   new Chartist.Pie("#collections-status-chart", {

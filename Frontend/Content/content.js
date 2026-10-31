@@ -1,4 +1,4 @@
-// Frontend/Content/content.js
+// Content workspace controller
 
 document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = enforceSessionGuard(["CONTENT_EDITOR"]);
@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-notice-modal").addEventListener(
     "click",
-    () => noticeModal.showModal(),
+    () => openNoticeModal(),
   );
   document.getElementById("close-notice-modal").addEventListener(
     "click",
@@ -26,6 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const noticeError = document.getElementById("notice-error");
+      noticeError.style.display = "none";
+
       const payload = {
         title_en: document.getElementById("notice-title-en").value.trim(),
         title_ur: document.getElementById("notice-title-ur").value.trim(),
@@ -34,21 +37,75 @@ document.addEventListener("DOMContentLoaded", async () => {
         publish: document.getElementById("notice-publish-toggle").checked,
       };
 
+      const missingUrdu = !payload.title_ur || !payload.content_ur;
+      const missingEnglish = !payload.title_en || !payload.content_en;
+
+      if (missingUrdu || missingEnglish) {
+        showInlineError(
+          noticeError,
+          missingUrdu && missingEnglish
+            ? "Add the notice in both English and Urdu before saving."
+            : missingUrdu
+            ? "The Urdu title and content are still empty."
+            : "The English title and content are still empty.",
+        );
+        return;
+      }
+
+      const noticeId = document.getElementById("notice-id").value;
+
       try {
         const res = await apiRequest("/notices", {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(
+            noticeId ? { ...payload, notice_id: noticeId } : payload,
+          ),
         });
         await handleApiResponse(res);
         noticeModal.close();
         e.target.reset();
+        document.getElementById("notice-id").value = "";
         await loadNotices();
+        showToast(
+          noticeId ? "Notice updated." : "Notice saved.",
+          "success",
+        );
       } catch (err) {
-        alert(err.message || "Failed to save notice.");
+        showInlineError(
+          noticeError,
+          err.message || "Could not save this notice.",
+        );
       }
     },
   );
 });
+
+function openNoticeModal(notice = null) {
+  const form = document.getElementById("save-notice-form");
+  form.reset();
+  document.getElementById("notice-error").style.display = "none";
+  document.getElementById("notice-id").value = notice ? notice.id : "";
+  document.querySelector("#notice-modal header h3").textContent = notice
+    ? "Edit public notice"
+    : "Draft public notice";
+  document.getElementById("save-notice-btn").textContent = notice
+    ? "Save changes"
+    : "Save notice";
+
+  if (notice) {
+    document.getElementById("notice-title-en").value = notice.title_en || "";
+    document.getElementById("notice-title-ur").value = notice.title_ur || "";
+    document.getElementById("notice-content-en").value = notice.content_en ||
+      "";
+    document.getElementById("notice-content-ur").value = notice.content_ur ||
+      "";
+    document.getElementById("notice-publish-toggle").checked = Boolean(
+      notice.is_published || notice.publish,
+    );
+  }
+
+  document.getElementById("notice-modal").showModal();
+}
 
 async function refreshContentDashboard() {
   await Promise.all([
@@ -68,7 +125,12 @@ async function loadNotices() {
 
     if (notices.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center">No notices created yet.</td></tr>';
+        '<tr><td colspan="6" class="text-center">No notices yet. Create the first one.</td></tr>';
+      document.getElementById("stat-notices-count").innerText = 0;
+      document.getElementById("stat-published-count").innerText = 0;
+      resetChart("#notice-status-chart");
+      document.querySelector("#notice-status-chart").innerHTML =
+        '<p class="subtext">Publish a notice to see the split.</p>';
       return;
     }
 
@@ -78,17 +140,23 @@ async function loadNotices() {
       if (n.is_published || n.publish) publishedCount++;
 
       const row = document.createElement("tr");
+      const editBtn = document.createElement("button");
+      editBtn.className = "small-btn";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => openNoticeModal(n));
+
       row.innerHTML = `
                 <td>${escapeHtml(n.title_en)}</td>
                 <td dir="rtl">${escapeHtml(n.title_ur)}</td>
                 <td><span class="badge ${
         (n.is_published || n.publish) ? "ok" : "chip"
       }">${(n.is_published || n.publish) ? "Published" : "Draft"}</span></td>
-                <td>${
-        n.published_at ? new Date(n.published_at).toLocaleString() : "-"
-      }</td>
-                <td>${new Date(n.created_at).toLocaleDateString()}</td>
+                <td>${n.published_at ? formatDateTime(n.published_at) : "-"}</td>
+                <td>${formatDate(n.created_at)}</td>
+                <td class="action-cell"></td>
             `;
+
+      row.querySelector(".action-cell").appendChild(editBtn);
       tbody.appendChild(row);
     });
 
@@ -96,6 +164,9 @@ async function loadNotices() {
     renderNoticeChart(publishedCount, notices.length - publishedCount);
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 6, "notices");
+    document.getElementById("stat-notices-count").innerText = "–";
+    document.getElementById("stat-published-count").innerText = "–";
   }
 }
 
@@ -109,8 +180,11 @@ async function loadInquiries() {
 
     if (inquiries.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="text-center">No public inquiries found.</td></tr>';
+        '<tr><td colspan="6" class="text-center">No inquiries yet.</td></tr>';
       document.getElementById("stat-inquiries-count").innerText = 0;
+      resetChart("#inquiry-status-chart");
+      document.querySelector("#inquiry-status-chart").innerHTML =
+        '<p class="subtext">No inquiries to summarise yet.</p>';
       return;
     }
 
@@ -140,7 +214,7 @@ async function loadInquiries() {
                 <td><span class="badge ${inq.is_resolved ? "ok" : "danger"}">${
         inq.is_resolved ? "Resolved" : "Pending"
       }</span></td>
-                <td>${new Date(inq.created_at).toLocaleDateString()}</td>
+                <td>${formatDate(inq.created_at)}</td>
                 <td class="action-cell"></td>
             `;
 
@@ -152,6 +226,8 @@ async function loadInquiries() {
     renderInquiryChart(inquiries.length - unresolvedCount, unresolvedCount);
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 6, "inquiries");
+    document.getElementById("stat-inquiries-count").innerText = "–";
   }
 }
 
@@ -163,14 +239,16 @@ async function resolveInquiry(inquiryId) {
     });
     await handleApiResponse(res);
     await loadInquiries();
+    showToast("Inquiry marked as resolved.", "success");
   } catch (err) {
-    alert(err.message || "Failed to mark inquiry as resolved.");
+    showToast(err.message || "Could not resolve this inquiry.");
   }
 }
 
 function renderNoticeChart(published, drafts) {
   if (typeof Chartist === "undefined") return;
 
+  resetChart("#notice-status-chart");
   new Chartist.Pie("#notice-status-chart", {
     labels: ["Published", "Drafts"],
     series: [published, drafts],
@@ -184,6 +262,7 @@ function renderNoticeChart(published, drafts) {
 function renderInquiryChart(resolved, pending) {
   if (typeof Chartist === "undefined") return;
 
+  resetChart("#inquiry-status-chart");
   new Chartist.Pie("#inquiry-status-chart", {
     labels: ["Resolved", "Pending"],
     series: [resolved, pending],

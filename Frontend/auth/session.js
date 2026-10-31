@@ -1,22 +1,24 @@
-// Frontend/auth/session.js
+// Session routing & RBAC guards
 
 /**
- * Role-to-Directory Routing Mapping
+ * Workspace folder for each backend role.
  */
 const ROLE_ROUTES = {
-  "SUPER_ADMIN": "/Frontend/Administrator/index.html",
-  "HR_LEAD": "/Frontend/Administrator/index.html",
-  "FINANCE_REVIEWER": "/Frontend/Finance/index.html",
-  "BRANCH_LEAD": "/Frontend/Branch/index.html",
-  "CONTENT_EDITOR": "/Frontend/Content/index.html",
+  "SUPER_ADMIN": "Administrator/index.html",
+  "HR_LEAD": "Administrator/index.html",
+  "FINANCE_REVIEWER": "Finance/index.html",
+  "BRANCH_LEAD": "Branch/index.html",
+  "CONTENT_EDITOR": "Content/index.html",
 };
 
 /**
  * Redirect user based on their backend role string.
  */
 function routeByRole(role) {
-  const destination = ROLE_ROUTES[role] || "/Frontend/login.html";
-  globalThis.location.href = destination;
+  const destination = ROLE_ROUTES[role];
+  globalThis.location.href = destination
+    ? appPath(destination)
+    : appPath("login.html");
 }
 
 /**
@@ -28,12 +30,13 @@ function enforceSessionGuard(allowedRoles = []) {
 
   if (!token || !user) {
     clearAuthSession();
-    globalThis.location.href = "/Frontend/login.html";
+    globalThis.location.href = appPath("login.html");
     return null;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     // User logged in but unauthorized for this specific folder -> send to their matching dashboard
+    showToast("You do not have access to that workspace.", "error");
     routeByRole(user.role);
     return null;
   }

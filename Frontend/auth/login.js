@@ -1,4 +1,4 @@
-// Frontend/auth/login.js
+// Authentication entry point
 
 document.addEventListener("DOMContentLoaded", () => {
   // If user already has a active session, route them to their matching dashboard
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     errorDiv.style.display = "none";
     submitBtn.disabled = true;
-    submitBtn.innerText = "Authenticating...";
+    submitBtn.innerText = "Signing in…";
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -41,19 +41,18 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (response) {
         const errorJson = await response.json();
         errorDiv.innerText = errorJson.detail ||
-          "Invalid email or password credentials.";
+        "That email and password combination did not work.";
         errorDiv.style.display = "block";
       } else {
-        errorDiv.innerText = "No response received from authentication server.";
+        errorDiv.innerText = "The login service did not respond.";
         errorDiv.style.display = "block";
       }
     } catch (err) {
-      errorDiv.innerText = err.message ||
-        "Unable to connect to live authentication service.";
+      errorDiv.innerText = err.message || "Could not reach the login service.";
       errorDiv.style.display = "block";
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerText = "Authenticate Session";
+      submitBtn.innerText = "Sign in";
     }
   });
 });

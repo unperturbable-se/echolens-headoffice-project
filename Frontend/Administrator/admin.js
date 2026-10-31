@@ -1,4 +1,4 @@
-// Frontend/Administrator/admin.js
+// Administrator workspace controller
 
 document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = enforceSessionGuard(["SUPER_ADMIN", "HR_LEAD"]);
@@ -13,7 +13,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-branch-modal").addEventListener(
     "click",
-    () => branchModal.showModal(),
+    () => {
+      document.getElementById("branch-error").style.display = "none";
+      branchModal.showModal();
+    },
   );
   document.getElementById("close-branch-modal").addEventListener(
     "click",
@@ -22,12 +25,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("open-user-modal").addEventListener(
     "click",
-    () => userModal.showModal(),
+    () => {
+      document.getElementById("user-error").style.display = "none";
+      const roleSelect = document.getElementById("user-role");
+      // HR leads can provision operational roles, but never another Super Admin.
+      Array.from(roleSelect.options).forEach((opt) => {
+        opt.hidden = currentUser.role === "HR_LEAD" &&
+          opt.value === "SUPER_ADMIN";
+      });
+      userModal.showModal();
+    },
   );
   document.getElementById("close-user-modal").addEventListener(
     "click",
     () => userModal.close(),
   );
+
+  const roleField = document.getElementById("user-role");
+  const branchField = document.getElementById("user-branch-select");
+  roleField.addEventListener("change", () => {
+    const isSuperAdmin = roleField.value === "SUPER_ADMIN";
+    branchField.disabled = isSuperAdmin;
+    if (isSuperAdmin) branchField.value = "";
+  });
+  branchField.disabled = roleField.value === "SUPER_ADMIN";
 
   await refreshAdminDashboard();
 
@@ -36,15 +57,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const branchError = document.getElementById("branch-error");
+      branchError.style.display = "none";
+
       const payload = {
         code: document.getElementById("branch-code").value.trim(),
         name_en: document.getElementById("branch-name-en").value.trim(),
         name_ur: document.getElementById("branch-name-ur").value.trim(),
         city: document.getElementById("branch-city").value.trim(),
-        address_en: document.getElementById("branch-name-en").value.trim() +
-          " Office",
-        address_ur: document.getElementById("branch-name-ur").value.trim() +
-          " دفتر",
+        address_en: document.getElementById("branch-address-en").value.trim(),
+        address_ur: document.getElementById("branch-address-ur").value.trim(),
       };
 
       try {
@@ -56,8 +78,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         branchModal.close();
         e.target.reset();
         await loadBranches();
+        await loadAuditLogs();
       } catch (err) {
-        alert(err.message || "Branch creation failed.");
+        showInlineError(branchError, err.message || "Branch creation failed.");
       }
     },
   );
@@ -67,17 +90,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const userError = document.getElementById("user-error");
+      userError.style.display = "none";
+
       const branchVal = document.getElementById("user-branch-select").value;
       const rawPassword = document.getElementById("user-password").value;
+      const role = document.getElementById("user-role").value;
+
+      if (role === "BRANCH_LEAD" && !branchVal) {
+        showInlineError(
+          userError,
+          "Choose the branch this branch lead will manage.",
+        );
+        document.getElementById("user-branch-select").focus();
+        return;
+      }
 
       const passwordHash = await hashPassword(rawPassword);
 
       const payload = {
-        branch_id: branchVal ? branchVal : null,
+        branch_id: role === "SUPER_ADMIN" || !branchVal ? null : branchVal,
         name: document.getElementById("user-name").value.trim(),
         email: document.getElementById("user-email").value.trim(),
         password_hash: `sha256$1000$salt$${passwordHash}`,
-        role: document.getElementById("user-role").value,
+        role: role,
       };
 
       try {
@@ -89,8 +125,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         userModal.close();
         e.target.reset();
         await loadUsers();
+        await loadAuditLogs();
       } catch (err) {
-        alert(err.message || "User creation failed.");
+        showInlineError(userError, err.message || "User creation failed.");
       }
     },
   );
@@ -115,11 +152,11 @@ async function loadBranches() {
     document.getElementById("stat-branches-count").innerText = branches.length;
     tbody.innerHTML = "";
     branchSelect.innerHTML =
-      '<option value="">-- System Wide (No Branch) --</option>';
+      '<option value="">System wide (no branch)</option>';
 
     if (branches.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center">No active branches found.</td></tr>';
+        '<tr><td colspan="5" class="text-center">No branches yet. Provision the first branch.</td></tr>';
       return;
     }
 
@@ -132,7 +169,7 @@ async function loadBranches() {
                 <td><span class="badge ${b.is_active ? "ok" : "danger"}">${
         b.is_active ? "Active" : "Inactive"
       }</span></td>
-                <td>${new Date(b.created_at).toLocaleDateString()}</td>
+                <td>${formatDate(b.created_at)}</td>
             `;
       tbody.appendChild(row);
 
@@ -143,6 +180,8 @@ async function loadBranches() {
     });
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 5, "the branch directory");
+    document.getElementById("stat-branches-count").innerText = "–";
   }
 }
 
@@ -157,7 +196,7 @@ async function loadUsers() {
 
     if (users.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="6" class="text-center">No system users found.</td></tr>';
+        '<tr><td colspan="6" class="text-center">No users yet. Create the first system user.</td></tr>';
       return;
     }
 
@@ -178,10 +217,14 @@ async function loadUsers() {
       row.innerHTML = `
                 <td>${escapeHtml(u.full_name || u.name)}</td>
                 <td>${escapeHtml(u.email)}</td>
-                <td><span class="chip">${escapeHtml(u.role)}</span></td>
-                <td><code>${
-        u.branch_id ? escapeHtml(u.branch_id.substring(0, 8)) + "..." : "System"
-      }</code></td>
+                <td><span class="chip">${escapeHtml(formatRole(u.role))}</span></td>
+                <td>${
+        u.branch_id
+          ? `<span class="uuid" title="${escapeHtml(u.branch_id)}" tabindex="0">${
+            escapeHtml(u.branch_id.substring(0, 8))
+          }…</span>`
+          : '<span class="subtext">System</span>'
+      }</td>
                 <td><span class="badge ${u.is_active ? "ok" : "danger"}">${
         u.is_active ? "Active" : "Disabled"
       }</span></td>
@@ -195,6 +238,11 @@ async function loadUsers() {
     renderRoleDistributionChart(roleCounts);
   } catch (err) {
     console.error(err);
+    renderLoadError(tbody, 6, "system users");
+    document.getElementById("stat-users-count").innerText = "–";
+    resetChart("#roles-chart");
+    document.querySelector("#roles-chart").innerHTML =
+      '<p class="subtext">Role breakdown is unavailable right now.</p>';
   }
 }
 
@@ -207,7 +255,10 @@ async function toggleUserActive(userId, newActiveState) {
     await handleApiResponse(res);
     await loadUsers();
   } catch (err) {
-    alert(err.message || "Failed to update user active status.");
+    showInlineError(
+      document.getElementById("users-error"),
+      err.message || "Failed to update user active status.",
+    );
   }
 }
 
@@ -216,7 +267,7 @@ async function loadAuditLogs() {
   try {
     const res = await apiRequest("/audit/list", {
       method: "POST",
-      body: JSON.stringify({ limit: 10 }),
+      body: JSON.stringify({ limit: 100 }),
     });
 
     const logs = await handleApiResponse(res);
@@ -224,7 +275,7 @@ async function loadAuditLogs() {
     feed.innerHTML = "";
 
     if (logs.length === 0) {
-      feed.innerHTML = '<p class="subtext">No audit events logged.</p>';
+      feed.innerHTML = '<p class="subtext">No audit events yet.</p>';
       return;
     }
 
@@ -235,22 +286,31 @@ async function loadAuditLogs() {
                 <p><strong>${escapeHtml(log.action)}</strong> on <code>${
         escapeHtml(log.resource)
       }</code></p>
-                <span class="subtext">${
-        new Date(log.created_at).toLocaleString()
-      }</span>
+                <span class="subtext">${formatDateTime(log.created_at)}</span>
             `;
       feed.appendChild(item);
     });
   } catch (err) {
     console.error(err);
+    feed.innerHTML =
+      '<p class="subtext">Could not load audit events. Check that the API is running.</p>';
+    document.getElementById("stat-audit-count").innerText = "–";
   }
 }
 
 function renderRoleDistributionChart(roleCounts) {
-  const labels = Object.keys(roleCounts);
+  const labels = Object.keys(roleCounts).map(formatRole);
   const series = Object.values(roleCounts);
 
-  if (labels.length > 0 && typeof Chartist !== "undefined") {
+  resetChart("#roles-chart");
+
+  if (labels.length === 0) {
+    document.querySelector("#roles-chart").innerHTML =
+      '<p class="subtext">No users to summarise yet.</p>';
+    return;
+  }
+
+  if (typeof Chartist !== "undefined") {
     new Chartist.Pie("#roles-chart", {
       labels: labels,
       series: series,

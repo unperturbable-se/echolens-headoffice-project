@@ -5,35 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShipLens - Portal Authentication</title>
 
-    <!-- Framework & Application CSS -->
-    <link rel="stylesheet"
-      href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
+    <!-- Google Fonts & Application CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
   </head>
   <body class="login-page">
     <main class="login-card">
       <header class="login-header">
-        <h2>ShipLens 1.0</h2>
-        <p class="subtext">Branch-to-Head-Office Management Platform</p>
+        <h2>ShipLens</h2>
+        <p class="subtext">Branch-to-head-office operations</p>
       </header>
 
-      <div id="error-message" class="alert-error" role="alert"></div>
+      <div id="error-message" class="alert-error" role="alert"
+        aria-live="polite"></div>
 
       <form id="login-form">
         <p>
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email"
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" autocomplete="username"
             placeholder="user@shiplens.org" required dir="ltr">
         </p>
 
         <p>
           <label for="password">Password</label>
           <input type="password" id="password" name="password"
-            placeholder="••••••••••••" required>
+            autocomplete="current-password" placeholder="••••••••••••" required>
         </p>
 
         <button type="submit" id="submit-btn" class="accent full-width">
-                Authenticate Session
+                Sign in
             </button>
       </form>
 
@@ -43,7 +45,7 @@
     </main>
 
     <!-- Dependencies must load in this exact order -->
-    <script src="auth/api_client.js"></script>
+    <script src="auth/api.js"></script>
     <script src="auth/session.js"></script>
     <script src="auth/login.js"></script>
   </body>

@@ -44,7 +44,7 @@ SESSION_TTL = timedelta(hours=8)
 TOKEN_BYTES = 32
 ALLOWED_ORIGINS = [
     "https://unperturbable-se.github.io",
-    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5501",
     "http://localhost:5500",
     "http://127.0.0.1:8080",
     "http://localhost:8080",

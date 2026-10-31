@@ -1,4 +1,4 @@
-// Frontend/Finance/finance.js
+// Finance workspace controller
 
 document.addEventListener("DOMContentLoaded", async () => {
   const currentUser = enforceSessionGuard(["FINANCE_REVIEWER"]);
@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     "submit",
     async (e) => {
       e.preventDefault();
+      const reviewError = document.getElementById("review-error");
+      reviewError.style.display = "none";
 
       const collectionId =
         document.getElementById("review-collection-id").value;
@@ -32,9 +34,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const isApproved = decisionStr === "APPROVED";
 
       if (!isApproved && !notes) {
-        alert(
-          "A review note/reason is strictly required when rejecting a collection.",
+        showInlineError(
+          reviewError,
+          "Add a note explaining why this collection is rejected.",
         );
+        document.getElementById("review-notes").focus();
         return;
       }
 
@@ -52,9 +56,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         await handleApiResponse(res);
         reviewModal.close();
         e.target.reset();
+        showToast(
+          isApproved ? "Collection approved." : "Collection rejected.",
+          "success",
+        );
         await loadFinanceData();
       } catch (err) {
-        alert(err.message || "Failed to submit review decision.");
+        showInlineError(
+          reviewError,
+          err.message || "Could not save the review decision.",
+        );
       }
     },
   );
@@ -86,8 +97,9 @@ async function loadFinanceData() {
 
     collections.forEach((c) => {
       statusCounts[c.status] = (statusCounts[c.status] || 0) + 1;
-      branchVolume[c.branch_id] = (branchVolume[c.branch_id] || 0) +
-        parseFloat(c.amount);
+      const branchKey = c.branch_name || c.branch_id || "Unassigned";
+      branchVolume[branchKey] = (branchVolume[branchKey] || 0) +
+        parseFloat(c.amount || 0);
 
       if (c.status === "PENDING") {
         pendingCount++;
@@ -98,35 +110,35 @@ async function loadFinanceData() {
         actionBtn.addEventListener("click", () => openReviewModal(c));
 
         row.innerHTML = `
-                    <td><code>${
-          escapeHtml(c.branch_id.substring(0, 8))
-        }...</code></td>
+                    <td>${branchCell(c)}</td>
                     <td>${escapeHtml(c.title_en)}</td>
                     <td><strong>PKR ${
-          parseFloat(c.amount).toLocaleString()
+          parseFloat(c.amount || 0).toLocaleString()
         }</strong></td>
-                    <td>${new Date(c.collection_date).toLocaleDateString()}</td>
+                    <td>${formatDate(c.collection_date)}</td>
                     <td class="action-cell"></td>
                 `;
 
         row.querySelector(".action-cell").appendChild(actionBtn);
         pendingTbody.appendChild(row);
       } else {
-        if (c.status === "APPROVED") approvedSum += parseFloat(c.amount);
+        if (c.status === "APPROVED") {
+          approvedSum += parseFloat(c.amount || 0);
+        }
         if (c.status === "REJECTED") rejectedCount++;
 
         let badgeClass = c.status === "APPROVED" ? "badge ok" : "badge danger";
 
         const row = document.createElement("tr");
         row.innerHTML = `
-                    <td><code>${
-          escapeHtml(c.branch_id.substring(0, 8))
-        }...</code></td>
+                    <td>${branchCell(c)}</td>
                     <td>${escapeHtml(c.title_en)}</td>
-                    <td>PKR ${parseFloat(c.amount).toLocaleString()}</td>
-                    <td><span class="${badgeClass}">${c.status}</span></td>
+                    <td>PKR ${parseFloat(c.amount || 0).toLocaleString()}</td>
+                    <td><span class="${badgeClass}">${
+          escapeHtml(c.status)
+        }</span></td>
                     <td>${escapeHtml(c.review_notes || c.notes || "-")}</td>
-                    <td>${new Date(c.collection_date).toLocaleDateString()}</td>
+                    <td>${formatDate(c.collection_date)}</td>
                 `;
         historyTbody.appendChild(row);
       }
@@ -139,34 +151,57 @@ async function loadFinanceData() {
 
     if (pendingCount === 0) {
       pendingTbody.innerHTML =
-        '<tr><td colspan="5" class="text-center">No pending collection records to review.</td></tr>';
+        '<tr><td colspan="5" class="text-center">Nothing is waiting for review.</td></tr>';
     }
 
     if (collections.length - pendingCount === 0) {
       historyTbody.innerHTML =
-        '<tr><td colspan="6" class="text-center">No reviewed collection history.</td></tr>';
+        '<tr><td colspan="6" class="text-center">No reviewed collections yet.</td></tr>';
     }
 
     renderFinanceCharts(statusCounts, branchVolume);
   } catch (err) {
     console.error(err);
+    renderLoadError(pendingTbody, 5, "the review queue");
+    renderLoadError(historyTbody, 6, "the review history");
+    resetChart("#finance-status-chart");
+    document.querySelector("#finance-status-chart").innerHTML =
+      '<p class="subtext">Review mix is unavailable right now.</p>';
+    resetChart("#branch-volume-chart");
+    document.querySelector("#branch-volume-chart").innerHTML =
+      '<p class="subtext">Branch volume is unavailable right now.</p>';
   }
 }
 
 function openReviewModal(collection) {
   document.getElementById("review-collection-id").value = collection.id;
+  document.getElementById("review-error").style.display = "none";
   document.getElementById("review-detail-title").innerText =
-    collection.title_en;
+    collection.title_en || "-";
   document.getElementById("review-detail-amount").innerText = parseFloat(
-    collection.amount,
+    collection.amount || 0,
   ).toLocaleString();
   document.getElementById("review-notes").value = "";
+  document.getElementById("review-decision").value = "APPROVED";
   document.getElementById("review-modal").showModal();
+}
+
+/**
+ * Branch is shown by name when the API provides one, with the full ID
+ * available on hover instead of a permanently truncated ghost value.
+ */
+function branchCell(collection) {
+  if (collection.branch_name) return escapeHtml(collection.branch_name);
+  if (!collection.branch_id) return '<span class="subtext">Unassigned</span>';
+  return `<span class="uuid" title="${
+    escapeHtml(collection.branch_id)
+  }" tabindex="0">${escapeHtml(collection.branch_id.substring(0, 8))}…</span>`;
 }
 
 function renderFinanceCharts(statusCounts, branchVolume) {
   if (typeof Chartist === "undefined") return;
 
+  resetChart("#finance-status-chart");
   new Chartist.Pie("#finance-status-chart", {
     labels: ["Pending", "Approved", "Rejected"],
     series: [
@@ -180,20 +215,26 @@ function renderFinanceCharts(statusCounts, branchVolume) {
     showLabel: true,
   });
 
-  const branchLabels = Object.keys(branchVolume).map((id) =>
-    id.substring(0, 6) + ".."
+  const branchLabels = Object.keys(branchVolume).map((label) =>
+    label.length > 12 ? label.substring(0, 12) + "…" : label
   );
   const branchSeries = Object.values(branchVolume);
 
-  if (branchLabels.length > 0) {
-    new Chartist.Bar("#branch-volume-chart", {
-      labels: branchLabels,
-      series: [branchSeries],
-    }, {
-      axisX: { offset: 30 },
-      axisY: { offset: 40 },
-    });
+  resetChart("#branch-volume-chart");
+
+  if (branchLabels.length === 0) {
+    document.querySelector("#branch-volume-chart").innerHTML =
+      '<p class="subtext">No collections to chart yet.</p>';
+    return;
   }
+
+  new Chartist.Bar("#branch-volume-chart", {
+    labels: branchLabels,
+    series: [branchSeries],
+  }, {
+    axisX: { offset: 30 },
+    axisY: { offset: 40 },
+  });
 }
 
 function escapeHtml(str) {

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShipLens - Administrator Workspace</title>
 
-    <!-- External Framework & Library CDNs -->
-    <link rel="stylesheet"
-      href="https://unpkg.com/missing.css@1.1.3/dist/missing.min.css">
+    <!-- Google Fonts & Application CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
     <link rel="stylesheet" href="../css/style.css">
@@ -30,15 +31,15 @@
         <!-- Quick System Metrics Row -->
         <div class="metrics-row">
           <article class="box">
-            <p class="subtext">Active Branches</p>
+            <p class="subtext">Active branches</p>
             <h3 id="stat-branches-count">0</h3>
           </article>
           <article class="box">
-            <p class="subtext">System Users</p>
+            <p class="subtext">System users</p>
             <h3 id="stat-users-count">0</h3>
           </article>
           <article class="box">
-            <p class="subtext">Audit Records</p>
+            <p class="subtext">Recent audit events</p>
             <h3 id="stat-audit-count">0</h3>
           </article>
         </div>
@@ -78,6 +79,7 @@
             <button id="open-user-modal"
               class="accent">Create System User</button>
           </header>
+          <div class="inline-error" id="users-error" role="alert"></div>
           <div class="table-container">
             <table class="table">
               <thead>
@@ -117,6 +119,7 @@
       </aside>
     </main>
 
+
     <!-- Modal: Provision Branch -->
     <dialog id="branch-modal">
       <article class="box">
@@ -124,25 +127,43 @@
           <h3>Provision New Branch</h3>
         </header>
         <form id="create-branch-form">
-          <p>
-            <label for="branch-code">Branch Code</label>
-            <input type="text" id="branch-code" required
-              placeholder="e.g., KHI-01">
-          </p>
-          <p>
-            <label for="branch-name-en">Branch Name (English)</label>
-            <input type="text" id="branch-name-en" required
-              placeholder="Karachi Central">
-          </p>
-          <p>
-            <label for="branch-name-ur">Branch Name (Urdu)</label>
-            <input type="text" id="branch-name-ur" required
-              placeholder="کراچی سینٹرل" dir="rtl">
-          </p>
-          <p>
-            <label for="branch-city">City</label>
-            <input type="text" id="branch-city" required placeholder="Karachi">
-          </p>
+          <div class="grid-2col">
+            <p>
+              <label for="branch-code">Branch Code</label>
+              <input type="text" id="branch-code" required maxlength="32"
+                placeholder="KHI-01">
+            </p>
+            <p>
+              <label for="branch-city">City</label>
+              <input type="text" id="branch-city" required maxlength="100"
+                placeholder="Karachi">
+            </p>
+          </div>
+          <div class="grid-2col">
+            <p>
+              <label for="branch-name-en">Branch Name (English)</label>
+              <input type="text" id="branch-name-en" required maxlength="200"
+                placeholder="Karachi Central">
+            </p>
+            <p>
+              <label for="branch-name-ur">Branch Name (Urdu)</label>
+              <input type="text" id="branch-name-ur" required maxlength="200"
+                placeholder="کراچی سینٹرل" dir="rtl">
+            </p>
+          </div>
+          <div class="grid-2col">
+            <p>
+              <label for="branch-address-en">Street Address (English)</label>
+              <input type="text" id="branch-address-en" required maxlength="500"
+                placeholder="12 Clifton Road, Karachi">
+            </p>
+            <p>
+              <label for="branch-address-ur">Street Address (Urdu)</label>
+              <input type="text" id="branch-address-ur" required maxlength="500"
+                placeholder="۱۲ کلفٹن روڈ، کراچی" dir="rtl">
+            </p>
+          </div>
+          <div class="inline-error" id="branch-error" role="alert"></div>
           <footer class="modal-actions">
             <button type="button" id="close-branch-modal">Cancel</button>
             <button type="submit" class="accent">Save Branch</button>
@@ -158,5 +179,55 @@
           <h3>Create System User</h3>
         </header>
         <form id="create-user-form">
+          <div class="grid-2col">
+            <p>
+              <label for="user-name">Full Name</label>
+              <input type="text" id="user-name" required maxlength="200"
+                placeholder="Ayesha Khan">
+            </p>
+            <p>
+              <label for="user-email">Email Address</label>
+              <input type="email" id="user-email" required maxlength="254"
+                placeholder="ayesha@shiplens.org" dir="ltr">
+            </p>
+          </div>
+          <div class="grid-2col">
+            <p>
+              <label for="user-role">Role</label>
+              <select id="user-role" required>
+                <option value="SUPER_ADMIN">Super Admin</option>
+                <option value="HR_LEAD">HR Lead</option>
+                <option value="FINANCE_REVIEWER">Finance Reviewer</option>
+                <option value="BRANCH_LEAD">Branch Lead</option>
+                <option value="CONTENT_EDITOR">Content Editor</option>
+              </select>
+            </p>
+            <p>
+              <label for="user-branch-select">Branch</label>
+              <select id="user-branch-select">
+                <option value="">System wide (no branch)</option>
+              </select>
+            </p>
+          </div>
           <p>
-                    <label for="user
+            <label for="user-password">Temporary Password</label>
+            <input type="password" id="user-password" required minlength="8"
+              placeholder="At least 8 characters">
+          </p>
+          <div class="inline-error" id="user-error" role="alert"></div>
+          <footer class="modal-actions">
+            <button type="button" id="close-user-modal">Cancel</button>
+            <button type="submit" class="accent">Create User</button>
+          </footer>
+        </form>
+      </article>
+    </dialog>
+
+    <!-- External JavaScript Libraries & Application Modules -->
+    <script
+      src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script src="../auth/api.js"></script>
+    <script src="../auth/session.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>
