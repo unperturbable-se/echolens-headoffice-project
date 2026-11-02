@@ -74,10 +74,10 @@ async function apiRequest(endpoint, options = {}) {
 
     if (
       response.status === 401 &&
-      !globalThis.location.pathname.endsWith("login.html")
+      !globalThis.location.pathname.endsWith("index.html")
     ) {
       clearAuthSession();
-      globalThis.location.href = appPath("login.html");
+      globalThis.location.href = appPath("index.html");
       return null;
     }
 
@@ -196,6 +196,6 @@ async function apiLogout() {
     await apiRequest("/auth/logout", { method: "POST" });
   } finally {
     clearAuthSession();
-    globalThis.location.href = appPath("login.html");
+    globalThis.location.href = appPath("index.html");
   }
 }

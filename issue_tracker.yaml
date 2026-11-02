@@ -45,16 +45,16 @@ categories:
     p1:
       - id: SCHEMA-007
         task: "UNIQUE INDEX ON user_sessions(token_hash)"
-        done: false
+        done: true
       - id: SCHEMA-008
         task: "INDEX ON user_sessions(expires_at)"
-        done: false
+        done: true
       - id: SCHEMA-009
         task: "INDEX ON user_sessions(user_id)"
-        done: false
+        done: true
       - id: SCHEMA-010
         task: "INDEX ON users(email)"
-        done: false
+        done: true
       - id: SCHEMA-011
         task: "INDEX ON audit_logs(created_at DESC)"
         done: false
@@ -186,7 +186,7 @@ categories:
         done: false
       - id: API-014
         task: "make logout idempotent (return 200 on missing session)"
-        done: false
+        done: true
       - id: API-015
         task: "add EmailStr on LoginIn, CreateUserIn, SubmitInquiryIn"
         done: false
@@ -219,13 +219,13 @@ categories:
     p1:
       - id: ROUTE-001
         task: "change /notices/published from POST -> GET"
-        done: false
+        done: true
       - id: ROUTE-002
         task: "split /health into /health/live (no DB) and /health/ready (DB)"
-        done: false
+        done: true
       - id: ROUTE-003
         task: "/health/ready returns 503 when DB disconnected"
-        done: false
+        done: true
       - id: ROUTE-004
         task: "cache /health/ready result for ~5s (k8s probes every 5-10s)"
         done: false
