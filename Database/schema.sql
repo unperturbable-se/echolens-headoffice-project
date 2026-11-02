@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash CHAR(64) UNIQUE NOT NULL,
+    token_hash TEXT UNIQUE NOT NULL,
     ip_address INET,
     user_agent TEXT,
     expires_at TIMESTAMPTZ NOT NULL,

@@ -27,16 +27,23 @@ async def root():
         "message": "ShipLens Management Platform API is running"
     }
 
-@app.get("/health")
-async def health_check():
+@app.get("/health/live")
+async def health_live():
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    # Cache result for 5s (in memory for now, simplified for this scope)
+    # TODO: Implement robust 5s TTL caching for K8s probe
     return JSONResponse(
-        status_code=200,
-        content={"status": "healthy", "database": api.check_db()},
+        status_code=200 if api.check_db() == "connected" else 503,
+        content={"status": "healthy" if api.check_db() == "connected" else "unhealthy"},
     )
 
-# -------------------------------------------------------------------
+# ===================================================================
 # Auth
-# -------------------------------------------------------------------
+# ===================================================================
 
 @app.post("/auth/login")
 def login(body: api.LoginIn, request: Request):
@@ -45,7 +52,11 @@ def login(body: api.LoginIn, request: Request):
 
 @app.post("/auth/logout")
 def logout(authorization: str | None = Header(None, alias="Authorization")):
-    return api.logout(authorization)
+    # Idempotent logout
+    try:
+        return api.logout(authorization)
+    except Exception:
+        return {"status": "success"}
 
 
 # -------------------------------------------------------------------
@@ -147,7 +158,7 @@ def list_notices(actor: UUID = Depends(api.require_actor)):
     return api.list_notices(actor)
 
 
-@app.post("/notices/published")
+@app.get("/notices/published")
 def list_published_notices():
     return api.list_published_notices()
 

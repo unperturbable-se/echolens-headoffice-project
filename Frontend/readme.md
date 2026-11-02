@@ -12,7 +12,7 @@ design system in `css/style.css` (deep maritime palette, Inter + Plus Jakarta Sa
 
 1. Start the backend API on `http://localhost:8000`.
 2. Serve this folder over HTTP (for example `npx serve .` or
-   `python3 -m http.server 5500`) and open `login.html`.
+   `python3 -m http.server 5500`) and open `index.html`.
 3. The API base URL lives in `auth/api.js` (`API_BASE_URL`). The backend
    must allow the frontend origin through CORS, since the two run on different
    ports.
@@ -32,7 +32,7 @@ Frontend/
 ├── auth/
 │   ├── api.js           # Centralized API fetch handlers
 │   └── session.js              # Session state & RBAC routing logic
-├── login.html                  # Primary authentication entrypoint
+├── index.html                  # Primary authentication entrypoint
 ├── Administrator/              # SUPER_ADMIN & HR_LEAD workspace
 │   ├── index.html
 │   └── admin.js

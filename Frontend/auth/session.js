@@ -18,7 +18,7 @@ function routeByRole(role) {
   const destination = ROLE_ROUTES[role];
   globalThis.location.href = destination
     ? appPath(destination)
-    : appPath("login.html");
+    : appPath("index.html");
 }
 
 /**
@@ -30,7 +30,7 @@ function enforceSessionGuard(allowedRoles = []) {
 
   if (!token || !user) {
     clearAuthSession();
-    globalThis.location.href = appPath("login.html");
+    globalThis.location.href = appPath("index.html");
     return null;
   }
 
